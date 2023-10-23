@@ -124,7 +124,7 @@ class Graph:
                     edges += ', ' + e    #will leave a comma at end... only thought is to have a flag for first. -- FIXED
             edges += '\n'
         # Print or return as string?
-        return div + iLine + oLine + nLine + edges + div
+        return '\n' + div + iLine + oLine + nLine + edges + div
 
     #A 'raw' print
     def __str__(self):
@@ -132,6 +132,45 @@ class Graph:
         ret += '\nInternal Nodes: ' + str(self.internNodes)
         return ret
     
+
+class Sequence:
+    def __init__(self) -> None:
+        self.order = [] #a list of the order of execution.
+        self.isValid = False    #to be determined later! (requires an input graph)
+    
+    def add(self, node):
+        """ Adds node to this execution sequence (appends to the end). 
+            Checks if node is in the list already
+        """
+        if node not in self.order:
+            self.order.append(node)
+            return True
+        return False    #node already in list
+
+    def readSequence(self, file_name):
+        
+        with open(file_name, 'r') as inFile:
+            line = inFile.readline().split(" ")
+            numOps = int(line[1].strip())
+            for i in range(numOps):
+                # Since graph has node #'s as strings ('1', '3', etc.) store the number as a string here as well!
+                self.add(inFile.readline().strip())
+    
+    def nicePrint(self):
+        out = str(len(self.order)) + ' Operations: '
+        first = True
+        for node in self.order:
+            if first:
+                out += node
+                first = False
+            else:
+                out += ' -> ' + node
+        return out + '\n'
+
+    def __str__(self):
+        return self.order
+
+#End Sequence Class
     
 file_path = input("Enter file path: ")
 
@@ -142,3 +181,8 @@ graph.readGraph(file_path)
 
 print(graph.nicePrint())
 
+seq_path = input("Enter Sequence Path: ")
+
+sequence = Sequence()
+sequence.readSequence(seq_path)
+print(sequence.nicePrint())

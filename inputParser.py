@@ -167,6 +167,14 @@ class Sequence:
                 out += ' -> ' + node
         return out + '\n'
 
+    def printToFile(self, file_name):
+        with open(file_name, 'w') as outFile:
+            outFile.write('Operations ' + str(len(self.order)) + '\n')
+            for i in self.order:
+                outFile.write(i + '\n')
+        # End of with automatically closes the file (i hope)
+        return True
+
     def __str__(self):
         return self.order
 
@@ -186,3 +194,10 @@ seq_path = input("Enter Sequence Path: ")
 sequence = Sequence()
 sequence.readSequence(seq_path)
 print(sequence.nicePrint())
+
+print_path = input("Enter a Path to Print Sequence to: ")
+out = sequence.printToFile(print_path)
+if out:
+    print("Success!")
+else:
+    print("Failed. ;(")

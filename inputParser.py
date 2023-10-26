@@ -11,6 +11,16 @@ class Graph:
         self.inputNodes = []
         self.outNodes = []
         self.internNodes = []
+        self.name = None
+
+    def __init__(self, name) -> None:
+        self.graph = {}
+        self.numNodes = 0
+        self.numEdges = 0
+        self.inputNodes = []
+        self.outNodes = []
+        self.internNodes = []
+        self.name = name
 
     def add_node(self, node):
         if node not in self.graph:
@@ -137,7 +147,13 @@ class Sequence:
     def __init__(self) -> None:
         self.order = [] #a list of the order of execution.
         self.isValid = False    #to be determined later! (requires an input graph)
+        self.name = None
     
+    def __init__(self, name) -> None:
+        self.order = [] #a list of the order of execution.
+        self.isValid = False    #to be determined later! (requires an input graph)
+        self.name = name
+
     def add(self, node):
         """ Adds node to this execution sequence (appends to the end). 
             Checks if node is in the list already
@@ -165,7 +181,7 @@ class Sequence:
                 first = False
             else:
                 out += ' -> ' + node
-        return out + '\n'
+        return '\n' + out + '\n'
 
     def printToFile(self, file_name):
         with open(file_name, 'w') as outFile:
@@ -179,25 +195,102 @@ class Sequence:
         return self.order
 
 #End Sequence Class
-    
-file_path = input("Enter file path: ")
 
-graph = Graph()
-graph.readGraph(file_path)
+def graphLoop(graph):
+    gId = graph.name
+    graphIdStr = "For Graph '" + gId + "'"
+    graphHelpStr = "\nGraph commands are: 'print', 'solve', and 'quit' (go back)"
+    print(graphIdStr + graphHelpStr)
+    userIn = input('+==>')
+    while userIn != 'quit' or 'q' or 'exit':
+        match userIn:
+            case 'print':
+                print(graphIdStr + graph.nicePrint())
+            case 'solve':
+                # Would produce a valid sequence for this graph/netlist
+                print("Not implemented!")
+            case 'quit':
+                return
+            case _: 
+                print(graphHelpStr)
+        userIn = input('+==>')
+    return
+#End loop function
 
-#print(graph)
+def seqLoop(seq):
+    seqId = seq.name
+    seqIdStr = "For Sequence '" + seqId + "'"
+    seqHelpStr = "\nSequence commands are: 'print', 'write', 'evaluate', and 'quit' (go back)"
+    print(seqIdStr + seqHelpStr)
+    userIn = input('+==>')
+    while userIn != 'quit' or 'q' or 'exit':
+        match userIn:
+            case 'print':
+                print(seqIdStr + seq.nicePrint())
+            case 'write':
+                print_path = input("Enter a Path to Print Sequence to: ")
+                out = seq.printToFile(print_path)
+                if out:
+                    print("Success!")
+                else:
+                    print("Failed. ;(")
+            case 'evaluate':
+                print("Not Implemented!")
+            case 'quit':
+                return
+            case _:
+                print(seqHelpStr)
+        #End Match
+        userIn = input('+==>')
+    #End while
+    return
+#End seq. loop function
 
-print(graph.nicePrint())
+def getFileName(path):
+    #Get the name of the file from the path (no extension or '/')
+    str1 = path.split('/')
+    str2 = str1[-1].split('.')
+    # assumming only 1 '.' for the extension, we can return the first element.
+    return str2[0]
 
-seq_path = input("Enter Sequence Path: ")
 
-sequence = Sequence()
-sequence.readSequence(seq_path)
-print(sequence.nicePrint())
+graphs = []
+seqs = []
 
-print_path = input("Enter a Path to Print Sequence to: ")
-out = sequence.printToFile(print_path)
-if out:
-    print("Success!")
-else:
-    print("Failed. ;(")
+helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'quit', and 'help'"
+
+print('*' * 50 + "\nWelcome to the Input Parser!" + helpStr)
+userIn = input("==>")
+while userIn != 'quit' or 'q' or 'exit':
+    match userIn:
+        case 'readGraph':
+            file_path = input("Enter graph file path: ")
+            gId = getFileName(file_path)
+            gr = Graph(gId)
+            gr.readGraph(file_path)
+            graphs.append(gr)
+            #Prompt for further graph options
+            print('Success!')   #add success/fail logic and exception handling later
+            graphLoop(gr)
+
+        case 'readSequence':
+            seq_path = input("Enter Sequence Path: ")
+            sId = getFileName(seq_path)
+            seq = Sequence(sId)
+            seq.readSequence(seq_path)
+            seqs.append(seq)
+            #Prompt for sequence options
+            print('Success!')
+            seqLoop(seq)
+        case 'show':
+            #Show all graphs and sequences with a number assigned to them
+            #for g in graphs:
+            print("Not implemented")
+            pass    
+        case 'quit':
+            break
+        case _:
+            print(helpStr)
+    userIn = input('==>')
+#End while
+print("Goodbye!")

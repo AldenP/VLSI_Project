@@ -11,6 +11,16 @@ class Graph:
         self.inputNodes = []
         self.outNodes = []
         self.internNodes = []
+        self.name = None
+
+    def __init__(self, name) -> None:
+        self.graph = {}
+        self.numNodes = 0
+        self.numEdges = 0
+        self.inputNodes = []
+        self.outNodes = []
+        self.internNodes = []
+        self.name = name
 
     def add_node(self, node):
         if node not in self.graph:
@@ -124,7 +134,7 @@ class Graph:
                     edges += ', ' + e    #will leave a comma at end... only thought is to have a flag for first. -- FIXED
             edges += '\n'
         # Print or return as string?
-        return div + iLine + oLine + nLine + edges + div
+        return '\n' + div + iLine + oLine + nLine + edges + div
 
     #A 'raw' print
     def __str__(self):
@@ -132,13 +142,155 @@ class Graph:
         ret += '\nInternal Nodes: ' + str(self.internNodes)
         return ret
     
+
+class Sequence:
+    def __init__(self) -> None:
+        self.order = [] #a list of the order of execution.
+        self.isValid = False    #to be determined later! (requires an input graph)
+        self.name = None
     
-file_path = input("Enter file path: ")
+    def __init__(self, name) -> None:
+        self.order = [] #a list of the order of execution.
+        self.isValid = False    #to be determined later! (requires an input graph)
+        self.name = name
 
-graph = Graph()
-graph.readGraph(file_path)
+    def add(self, node):
+        """ Adds node to this execution sequence (appends to the end). 
+            Checks if node is in the list already
+        """
+        if node not in self.order:
+            self.order.append(node)
+            return True
+        return False    #node already in list
 
-#print(graph)
+    def readSequence(self, file_name):
+        
+        with open(file_name, 'r') as inFile:
+            line = inFile.readline().split(" ")
+            numOps = int(line[1].strip())
+            for i in range(numOps):
+                # Since graph has node #'s as strings ('1', '3', etc.) store the number as a string here as well!
+                self.add(inFile.readline().strip())
+    
+    def nicePrint(self):
+        out = str(len(self.order)) + ' Operations: '
+        first = True
+        for node in self.order:
+            if first:
+                out += node
+                first = False
+            else:
+                out += ' -> ' + node
+        return '\n' + out + '\n'
 
-print(graph.nicePrint())
+    def printToFile(self, file_name):
+        with open(file_name, 'w') as outFile:
+            outFile.write('Operations ' + str(len(self.order)) + '\n')
+            for i in self.order:
+                outFile.write(i + '\n')
+        # End of with automatically closes the file (i hope)
+        return True
 
+    def __str__(self):
+        return self.order
+
+#End Sequence Class
+
+def graphLoop(graph):
+    gId = graph.name
+    graphIdStr = "For Graph '" + gId + "'"
+    graphHelpStr = "\nGraph commands are: 'print', 'solve', and 'quit' (go back)"
+    print(graphIdStr + graphHelpStr)
+    userIn = input('+==>')
+    while userIn != 'quit' or 'q' or 'exit':
+        match userIn:
+            case 'print':
+                print(graphIdStr + graph.nicePrint())
+            case 'solve':
+                # Would produce a valid sequence for this graph/netlist
+                print("Not implemented!")
+            case 'quit':
+                return
+            case _: 
+                print(graphHelpStr)
+        userIn = input('+==>')
+    return
+#End loop function
+
+def seqLoop(seq):
+    seqId = seq.name
+    seqIdStr = "For Sequence '" + seqId + "'"
+    seqHelpStr = "\nSequence commands are: 'print', 'write', 'evaluate', and 'quit' (go back)"
+    print(seqIdStr + seqHelpStr)
+    userIn = input('+==>')
+    while userIn != 'quit' or 'q' or 'exit':
+        match userIn:
+            case 'print':
+                print(seqIdStr + seq.nicePrint())
+            case 'write':
+                print_path = input("Enter a Path to Print Sequence to: ")
+                out = seq.printToFile(print_path)
+                if out:
+                    print("Success!")
+                else:
+                    print("Failed. ;(")
+            case 'evaluate':
+                print("Not Implemented!")
+            case 'quit':
+                return
+            case _:
+                print(seqHelpStr)
+        #End Match
+        userIn = input('+==>')
+    #End while
+    return
+#End seq. loop function
+
+def getFileName(path):
+    #Get the name of the file from the path (no extension or '/')
+    str1 = path.split('/')
+    str2 = str1[-1].split('.')
+    # assumming only 1 '.' for the extension, we can return the first element.
+    return str2[0]
+
+
+graphs = []
+seqs = []
+
+helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'quit', and 'help'"
+
+print('*' * 50 + "\nWelcome to the Input Parser!" + helpStr)
+userIn = input("==>")
+while userIn != 'quit' or 'q' or 'exit':
+    match userIn:
+        case 'readGraph':
+            file_path = input("Enter graph file path: ")
+            gId = getFileName(file_path)
+            gr = Graph(gId)
+            gr.readGraph(file_path)
+            graphs.append(gr)
+            #Prompt for further graph options
+            print('Success!')   #add success/fail logic and exception handling later
+            graphLoop(gr)
+
+        case 'readSequence':
+            seq_path = input("Enter Sequence Path: ")
+            sId = getFileName(seq_path)
+            seq = Sequence(sId)
+            seq.readSequence(seq_path)
+            seqs.append(seq)
+            #Prompt for sequence options
+            print('Success!')
+            seqLoop(seq)
+        case 'show':
+            #Show all graphs and sequences with a number assigned to them
+            #for g in graphs:
+            print("Not implemented")
+            pass    
+        case 'quit':
+            break
+        case _:
+            print(helpStr)
+    userIn = input('==>')
+#End while
+print("Goodbye!")

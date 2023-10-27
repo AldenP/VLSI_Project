@@ -1,5 +1,5 @@
 # David Patenaude 
-# EEE4334 CAD for VLSI Project Part 1
+# EEE4334 CAD for VLSI Project Part 1 (input parsing)
 # 10.23.2023
 
 # Define a graph class (adjacency list)
@@ -111,7 +111,7 @@ class Graph:
             followed by number of output nodes and printing them.
             It then continues to list the of internal nodes, followed by the edges of the graph
         """
-        div = '*' * 26 + '\n'
+        div = '*' * 26  # + '\n'
         iLine = str(len(self.inputNodes)) + ' Inputs: '
         for i in self.inputNodes:
             iLine += str(i) + ' '
@@ -141,7 +141,6 @@ class Graph:
         ret = 'Graph: ' + str(self.graph) + '\nInputs: ' + str(self.inputNodes) + '\nOutputs: ' + str(self.outNodes)
         ret += '\nInternal Nodes: ' + str(self.internNodes)
         return ret
-    
 
 class Sequence:
     def __init__(self) -> None:
@@ -164,7 +163,8 @@ class Sequence:
         return False    #node already in list
 
     def readSequence(self, file_name):
-        
+        """ Reads in an execution sequence from the file passed"""
+        # Bad file name exception handled prior
         with open(file_name, 'r') as inFile:
             line = inFile.readline().split(" ")
             numOps = int(line[1].strip())
@@ -184,32 +184,43 @@ class Sequence:
         return '\n' + out + '\n'
 
     def printToFile(self, file_name):
-        with open(file_name, 'w') as outFile:
-            outFile.write('Operations ' + str(len(self.order)) + '\n')
-            for i in self.order:
-                outFile.write(i + '\n')
-        # End of with automatically closes the file (i hope)
-        return True
+        """ Prints the execution sequence to a file provided in the
+            same format as the input
+        """
+        try:
+            with open(file_name, 'w') as outFile:
+                outFile.write('Operations ' + str(len(self.order)) + '\n')
+                for i in self.order:
+                    outFile.write(i + '\n')
+            # End of with automatically closes the file
+            return True
+        except OSError:
+            print("Error while printing to file. Program lacks permissions or bad path.")
+            #raise will interrupt the program
+        except Exception as e:
+            raise e #Raise the exception
 
     def __str__(self):
         return self.order
-
 #End Sequence Class
 
 def graphLoop(graph):
     gId = graph.name
     graphIdStr = "For Graph '" + gId + "'"
-    graphHelpStr = "\nGraph commands are: 'print', 'solve', and 'quit' (go back)"
+    graphHelpStr = "\nGraph commands are: 'print', 'solve', 'evaluate', and 'back' (go back)"
     print(graphIdStr + graphHelpStr)
-    userIn = input('+==>')
-    while userIn != 'quit' or 'q' or 'exit':
+    userIn = input('+==>').strip()
+    while userIn != 'back' or 'q' or 'exit':
         match userIn:
             case 'print':
                 print(graphIdStr + graph.nicePrint())
             case 'solve':
                 # Would produce a valid sequence for this graph/netlist
                 print("Not implemented!")
-            case 'quit':
+            case 'evaluate':
+                # Prompt for an imported sequence from the global variable 'seqs'
+                print("Not Implemented!")
+            case 'back':
                 return
             case _: 
                 print(graphHelpStr)
@@ -220,10 +231,10 @@ def graphLoop(graph):
 def seqLoop(seq):
     seqId = seq.name
     seqIdStr = "For Sequence '" + seqId + "'"
-    seqHelpStr = "\nSequence commands are: 'print', 'write', 'evaluate', and 'quit' (go back)"
+    seqHelpStr = "\nSequence commands are: 'print', 'write', 'evaluate', and 'back' (go back)"
     print(seqIdStr + seqHelpStr)
-    userIn = input('+==>')
-    while userIn != 'quit' or 'q' or 'exit':
+    userIn = input('+==>').strip()
+    while userIn != 'back' or 'q' or 'exit':
         match userIn:
             case 'print':
                 print(seqIdStr + seq.nicePrint())
@@ -235,8 +246,9 @@ def seqLoop(seq):
                 else:
                     print("Failed. ;(")
             case 'evaluate':
+                #Ask for a sequence to run for this graph.
                 print("Not Implemented!")
-            case 'quit':
+            case 'back':
                 return
             case _:
                 print(seqHelpStr)
@@ -253,28 +265,46 @@ def getFileName(path):
     # assumming only 1 '.' for the extension, we can return the first element.
     return str2[0]
 
-
+# "Main" equivalent
 graphs = []
 seqs = []
 
-helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'quit', and 'help'"
+helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 
 print('*' * 50 + "\nWelcome to the Input Parser!" + helpStr)
-userIn = input("==>")
-while userIn != 'quit' or 'q' or 'exit':
+userIn = input("==>").strip()   # could also .lower()
+while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
     match userIn:
         case 'readGraph':
             file_path = input("Enter graph file path: ")
+            # I could have try go over the readGraph function call instead... might be better ( more robust)
+            try:
+                with open(file_path, 'r') as f:
+                    pass
+            except FileNotFoundError as ex:
+                print("File not found: '" + ex.filename + "'\nPlease try again")
+                continue #continue to next while iteration (userIn should be same - 'readGraph')
+
             gId = getFileName(file_path)
             gr = Graph(gId)
             gr.readGraph(file_path)
             graphs.append(gr)
-            #Prompt for further graph options
+            #Prompt for further graph options - graph loop function
             print('Success!')   #add success/fail logic and exception handling later
             graphLoop(gr)
+            #Print the helpStr to help user know where they are.
+            print(helpStr)
 
         case 'readSequence':
             seq_path = input("Enter Sequence Path: ")
+
+            try:
+                with open(seq_path, 'r') as f:
+                    pass
+            except FileNotFoundError as ex:
+                print("File not found: '" + ex.filename + "'\nPlease try again")
+                continue #continue to next while iteration (userIn should be same - 'readSequence')
+
             sId = getFileName(seq_path)
             seq = Sequence(sId)
             seq.readSequence(seq_path)
@@ -282,11 +312,44 @@ while userIn != 'quit' or 'q' or 'exit':
             #Prompt for sequence options
             print('Success!')
             seqLoop(seq)
+
+            print(helpStr)
         case 'show':
-            #Show all graphs and sequences with a number assigned to them
+            #Show all graphs and sequences with a number (or their name) assigned to them 
             #for g in graphs:
-            print("Not implemented")
-            pass    
+            print("Imported Graphs: ")
+            first = True
+            for g in graphs:
+                if first:
+                    first = False
+                    print("'"+g.name + "'", end=' ')
+                else:
+                    print(", '" + g.name + "'", end = ' ')
+            if graphs.count == 0:
+                print('(None)')
+            print("\nImported Sequences: ")
+            first = True
+            for s in seqs:
+                if first:
+                    first = False
+                    print("'"+s.name + "'", end=' ')
+                else:
+                    print(", '" + s.name + "'", end = ' ')
+            if seqs.count == 0:
+                print('(None)')
+            print("\n" + "-" * 10) #newline / divider
+
+        case 'select':
+            grName = input("Enter an imported graph name: ")
+            found = False
+            for g in graphs:
+                if g.name == grName:
+                    found = True
+                    graphLoop(g)
+                    print(helpStr)
+                    break #the for loop
+            if not found:
+                print("Name not found")
         case 'quit':
             break
         case _:

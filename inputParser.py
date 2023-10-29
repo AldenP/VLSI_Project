@@ -4,7 +4,10 @@
 
 # Define a graph class (adjacency list)
 class Graph:
+
+    #Adding variables here would be accessible for all instances of the class
     def __init__(self) -> None:
+        #While variables here are accessible to each instance of the Class individually!
         self.graph = {}
         self.numNodes = 0
         self.numEdges = 0

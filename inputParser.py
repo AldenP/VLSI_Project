@@ -5,7 +5,8 @@
 # Define a graph class (adjacency list)
 class Graph:
     def __init__(self) -> None:
-        self.graph = {}
+        self.graphInO = {}  #Edges go from input nodes to output nodes
+        self.graphOIn = {}  #Edges go from output nodes to input nodes
         self.numNodes = 0
         self.numEdges = 0
         self.inputNodes = []
@@ -14,7 +15,8 @@ class Graph:
         self.name = None
 
     def __init__(self, name) -> None:
-        self.graph = {}
+        self.graphInO = {}
+        self.graphOIn = {}  #Edges go from output nodes to input nodes
         self.numNodes = 0
         self.numEdges = 0
         self.inputNodes = []
@@ -23,14 +25,18 @@ class Graph:
         self.name = name
 
     def add_node(self, node):
-        if node not in self.graph:
-            self.graph[node] = []
+        if node not in self.graphInO:
+            self.graphInO[node] = []
+            self.graphOIn[node] = []
             self.numNodes += 1
         
     def add_edge(self, node1, node2):
-        if node1 in self.graph and node2 in self.graph:
-            self.graph[node1].append(node2)
-            #self.graph[node2].append(node1) # for undirected
+        if node1 in self.graphInO and node2 in self.graphInO:
+            self.graphInO[node1].append(node2)
+            # Do not add an edge to an input node for the reversed graph
+            if node1 not in self.inputNodes:
+                self.graphOIn[node2].append(node1)  # put edge in reverse order
+            #self.graphInO[node2].append(node1) # for undirected
         #else:
             # Is there a log we can print to?
             #print("A node was not in the graph")
@@ -67,7 +73,7 @@ class Graph:
                     numNodes = int(sLine[1].strip())
                     newNodes = numNodes - len(self.outNodes)   # # of output nodes (or numOuts)
                     #i = 1
-                    #while str(i) not in self.graph:
+                    #while str(i) not in self.graphInO:
                     #    nonlocal i #doesn't work! ugh. (give some error)
                     #    i = i + 1
                         # Will not work if output nodes are not continuous numbers.
@@ -112,7 +118,7 @@ class Graph:
             It then continues to list the of internal nodes, followed by the edges of the graph
         """
         div = '*' * 26  # + '\n'
-        iLine = str(len(self.inputNodes)) + ' Inputs: '
+        iLine = '\n'+ str(len(self.inputNodes)) + ' Inputs: '
         for i in self.inputNodes:
             iLine += str(i) + ' '
         oLine = '\n' + str(len(self.outNodes)) + ' Outputs: '
@@ -123,10 +129,40 @@ class Graph:
             nLine += str(i) + ' '
         # Now for the edges!
         edges = '\n'+ str(self.numEdges) + ' Edges:\n'
-        for node in self.graph:
+        for node in self.graphInO:
             edges += '\t' + node + ': '
             first = True
-            for e in self.graph[node]:
+            for e in self.graphInO[node]:
+                if first:
+                    edges += e
+                    first = False
+                else:
+                    edges += ', ' + e    #will leave a comma at end... only thought is to have a flag for first. -- FIXED
+            edges += '\n'
+        # Print or return as string?
+        return '\n' + div + iLine + oLine + nLine + edges + div
+
+    def nicePrintReverse(self):
+        """ Prints the reversed graph object, listing the number of input nodes and then printing them
+            followed by number of output nodes and printing them.
+            It then continues to list the of internal nodes, followed by the edges of the graph
+        """
+        div = '*' * 26  # + '\n'
+        iLine = '\n' + str(len(self.inputNodes)) + ' Inputs: '
+        for i in self.inputNodes:
+            iLine += str(i) + ' '
+        oLine = '\n' + str(len(self.outNodes)) + ' Outputs: '
+        for o in self.outNodes:
+            oLine += str(o) + ' '
+        nLine = '\n' + str(len(self.internNodes)) + ' Internal Nodes: '
+        for i in self.internNodes:
+            nLine += str(i) + ' '
+        # Now for the edges!
+        edges = '\n'+ str(self.numEdges) + ' Edges:\n'
+        for node in self.graphOIn:
+            edges += '\t' + node + ': '
+            first = True
+            for e in self.graphOIn[node]:
                 if first:
                     edges += e
                     first = False
@@ -138,7 +174,7 @@ class Graph:
 
     #A 'raw' print
     def __str__(self):
-        ret = 'Graph: ' + str(self.graph) + '\nInputs: ' + str(self.inputNodes) + '\nOutputs: ' + str(self.outNodes)
+        ret = 'Graph: ' + str(self.graphInO) + '\nInputs: ' + str(self.inputNodes) + '\nOutputs: ' + str(self.outNodes)
         ret += '\nInternal Nodes: ' + str(self.internNodes)
         return ret
 
@@ -161,6 +197,40 @@ class Sequence:
             self.order.append(node)
             return True
         return False    #node already in list
+
+    def isValidSequence(self, graph):
+        """Determine if this sequence is valid for the graph selected
+            Start by navigating the graph in the 'reversed' direction. If no edges then 
+            that node can be executed (it does not depend on any internal nodes)"""
+        #First remove the edges that go to the input nodes. => This will run multiple times on the same object! (Pass by reference!)
+        # this should be handled in the input function. 
+        # This is convoluted with this implementation. I recommend doing two things:
+        # 1) have a bi-directional graph to start with; 2) make mulitple modules (code over multiple files)
+        """ This is now handled in the add_node function (it skips adding input nodes to graphOIn)
+        for inNode in graph.inputNodes:
+            # For each end node of the input node edges, ...
+            for node in graph.graphInO[inNode]:
+                #...remove the input node from the list.
+                graph.graphOIn[node].remove(inNode)
+                """
+        #Now we can check if the sequence of nodes is valid by seeing if the list of nodes for that node is empty
+        import copy
+        #Needed to be above the for loop.
+        graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
+        for node in self.order:
+            #graphCopy = graph.graphOIn.copy()   #gives a shallow copy...the lists will be the same data
+            #print(graphCopy.nicePrintReverse())     #doesn't work because copy is a dictionary not a graph obj!
+            #print("len of node '" + str(node) + "': " + str(len(graphCopy[node])))
+            if len(graphCopy[node]) == 0:
+                #This node can be processed, so we must remove it from the graph.
+                for edge in graph.graphInO[node]: # these are the nodes dependent on 'node' (nodes upstream)
+                    graphCopy[edge].remove(node) 
+                    #print('removed edge: ' + str(node) + " from " + str(edge)) #debug print: had copy in the for loop. needed to be above it
+            else:
+                self.isValid = False
+                return False
+        self.isValid = True
+        return True
 
     def readSequence(self, file_name):
         """ Reads in an execution sequence from the file passed"""
@@ -214,11 +284,15 @@ def graphLoop(graph):
         match userIn:
             case 'print':
                 print(graphIdStr + graph.nicePrint())
+                #Print the reverse graph for debugging (it appears to be correct)
+                print(graphIdStr + 'reverse!' + graph.nicePrintReverse())
             case 'solve':
                 # Would produce a valid sequence for this graph/netlist
                 print("Not implemented!")
             case 'evaluate':
                 # Prompt for an imported sequence from the global variable 'seqs'
+                #determine the minimum memory consumption 
+                #seqName = input("Enter an imported sequence to determine minimum memory consumption: ")
                 print("Not Implemented!")
             case 'back':
                 return
@@ -246,8 +320,31 @@ def seqLoop(seq):
                 else:
                     print("Failed. ;(")
             case 'evaluate':
-                #Ask for a sequence to run for this graph.
-                print("Not Implemented!")
+                #Ask for a graph to test this sequence
+                graphName = input("Enter an imported graph name or a file name for a new graph: ")
+                # Check if it is just a name
+                """if graphName.find('/') != -1 or graphName.find('\\') != -1:
+                    # it is a path if it has a / or \.
+                    name = getFileName(graphName)
+                    global graphs
+
+                    try:
+                        idx = graphs.index(name)
+                    except ValueError:
+                        pass    #Pretty sure I'll end up with an error of scope again.
+                    if graphs.__contains__(name):
+                        seq.isValidSequence()
+                        pass
+                """
+                global graphs
+                evalOn = graphs[graphName]
+                out = seq.isValidSequence(evalOn)
+                #print("The Sequence is " + ( out ? "not ":"") + "valid!")
+                if out: 
+                    print("The Sequence " + seq.name +  " is VALID for " + graphName + ".")
+                else:
+                    print("The Sequence " + seq.name +  " is NOT valid for " + graphName + ".")
+                #print("Not Implemented!")
             case 'back':
                 return
             case _:
@@ -266,8 +363,8 @@ def getFileName(path):
     return str2[0]
 
 # "Main" equivalent
-graphs = []
-seqs = []
+graphs = {}
+seqs = {}
 
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 
@@ -288,7 +385,8 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             gId = getFileName(file_path)
             gr = Graph(gId)
             gr.readGraph(file_path)
-            graphs.append(gr)
+            #graphs.append(gr)
+            graphs[gId] = gr    #map the string name (gId) to this graph object (gr)
             #Prompt for further graph options - graph loop function
             print('Success!')   #add success/fail logic and exception handling later
             graphLoop(gr)
@@ -308,7 +406,8 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             sId = getFileName(seq_path)
             seq = Sequence(sId)
             seq.readSequence(seq_path)
-            seqs.append(seq)
+            #seqs.append(seq)
+            seqs[sId] = seq #map the string name to this seq. object
             #Prompt for sequence options
             print('Success!')
             seqLoop(seq)
@@ -319,39 +418,50 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             #for g in graphs:
             print("Imported Graphs: ")
             first = True
-            for g in graphs:
+            #Changed from a list to a dictionary. 
+            for g in graphs.values():
                 if first:
                     first = False
-                    print("'"+g.name + "'", end=' ')
+                    print("'"+ g.name + "'", end=' ')
                 else:
                     print(", '" + g.name + "'", end = ' ')
-            if graphs.count == 0:
-                print('(None)')
+            #if graphs.values == 0:
+            #    print('(None)')
             print("\nImported Sequences: ")
             first = True
-            for s in seqs:
+            for s in seqs.values():
                 if first:
                     first = False
                     print("'"+s.name + "'", end=' ')
                 else:
                     print(", '" + s.name + "'", end = ' ')
-            if seqs.count == 0:
-                print('(None)')
+            #if seqs.count == 0:
+            #    print('(None)')
             print("\n" + "-" * 10) #newline / divider
 
         case 'select':
-            grName = input("Enter an imported graph name: ")
+            #Add option to select a sequence!
+            grName = input("Enter an imported graph or sequence name: ")
             found = False
-            for g in graphs:
+            for g in graphs.values():
                 if g.name == grName:
                     found = True
                     graphLoop(g)
                     print(helpStr)
                     break #the for loop
+            for s in seqs.values():
+                if s.name == grName:
+                    found = True
+                    seqLoop(s)
+                    print(helpStr)
+                    break
             if not found:
                 print("Name not found")
         case 'quit':
             break
+        case 'help':
+            # add extra information to this command.
+            print(helpStr)
         case _:
             print(helpStr)
     userIn = input('==>')

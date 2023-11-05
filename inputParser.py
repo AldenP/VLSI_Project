@@ -2,6 +2,8 @@
 # EEE4334 CAD for VLSI Project Part 1 (input parsing)
 # 10.23.2023
 
+#Import copy to make deep copies of objects
+import copy
 # Define a graph class (adjacency list)
 class Graph:
     def __init__(self) -> None:
@@ -214,7 +216,6 @@ class Sequence:
                 graph.graphOIn[node].remove(inNode)
                 """
         #Now we can check if the sequence of nodes is valid by seeing if the list of nodes for that node is empty
-        import copy
         #Needed to be above the for loop.
         graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
         for node in self.order:
@@ -292,8 +293,16 @@ def graphLoop(graph):
             case 'evaluate':
                 # Prompt for an imported sequence from the global variable 'seqs'
                 #determine the minimum memory consumption 
-                #seqName = input("Enter an imported sequence to determine minimum memory consumption: ")
-                print("Not Implemented!")
+                seqName = input("Enter an imported sequence to determine minimum memory consumption: ")
+                global seqs
+                if seqName not in seqs:
+                    print("Sequence '"+ seqName + "' not imported!")   #
+                    userIn = '' #attempt to give help prompt on next iteration
+                    continue
+                #Otherwise pass seqs[seqName] 
+                mem = findMemCost(graph, seqs[seqName])
+                print("The memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
+                #print("Not Implemented!")
             case 'back':
                 return
             case _: 
@@ -354,6 +363,20 @@ def seqLoop(seq):
     #End while
     return
 #End seq. loop function
+def isValidPath(path):
+    """ Try to open the file (path) with read permissions
+    return false for any access denied or file not found errors"""
+    try:
+        with open(path, 'r'):
+            pass
+    except OSError:
+        return False
+    except FileNotFoundError:
+        return False
+    except Exception as e:
+        print(e)
+        raise e
+    return True
 
 def getFileName(path):
     #Get the name of the file from the path (no extension or '/')
@@ -362,6 +385,48 @@ def getFileName(path):
     # assumming only 1 '.' for the extension, we can return the first element.
     return str2[0]
 
+def findMemCost(graph, sequence):
+    """ Finds the minimum memory cost of evaluating the graph using the sequence provided
+        Sequence should be valid"""
+    """Two  ideas: Use a set, track the size each iteration for the max. Remove from set
+        when node no longer needed (by checking if any edges left.)
+        Other idea: I forgot! but it probably deals with the graph and edges"""
+    inUse = set()  #Set to store nodes in use
+    #Populate with input nodes to start. 
+    for iNode in graph.inputNodes:
+        inUse.add(iNode)
+    maxMem = len(inUse) #initial maximum
+    # could iterate over set elements and see if any edges leaving it. -> not efficient
+    # could count number of edges and remove one each time it is used, at zero remove it. 
+    # (better - takes the hit at the start) but it should iterate the whole graph...
+    edgeCount = dict()
+    for node in graph.graphInO:
+        count = 0
+        for e in graph.graphInO[node]:
+            count += 1
+        #Scope issue?
+        if count == 0:
+            raise Exception("Count is Zero")
+        print("Number of edges for '" + node + "': " + count)
+        edgeCount[node] = count
+
+    #gr = copy.deepcopy(graph.InO)
+    seq = copy.deepcopy(sequence)   #copy not needed
+    #loop while there is a next node to process. 
+    for next in seq.order:
+        #Assume order is valid. compute 'next', add to set (check if new max)
+        inUse.add(next) #compute 'next'
+        #Update maxMem if set is larger now.
+        if len(inUse) > maxMem:
+            maxMem = len(inUse)
+        #Use graph to reduce edge counter, if any edges go to zero, remove from set
+        for e in graph.graphOIn[next]:  #loop edges leading into current node
+            edgeCount[e] -= 1
+            if edgeCount[e] == 0:
+                #Free this from the set/memory
+                inUse.remove(e)
+    return maxMem
+        
 # "Main" equivalent
 graphs = {}
 seqs = {}

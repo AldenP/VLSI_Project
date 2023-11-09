@@ -2,6 +2,9 @@
 # EEE4334 CAD for VLSI Project Part 1 (input parsing)
 # 10.23.2023
 
+#This is the all in one file 
+#as of 11.9.2023, moving to multiple files. 
+
 #Import copy to make deep copies of objects
 import copy
 # Define a graph class (adjacency list)

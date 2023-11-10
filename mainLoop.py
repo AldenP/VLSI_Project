@@ -6,6 +6,7 @@
 
 import inputOutput as io;
 import dataStructures as structs;
+DEBUG = False;
 
 # Loop functions for console-based user input
 def graphLoop(graph):
@@ -14,27 +15,28 @@ def graphLoop(graph):
     graphHelpStr = "\nGraph commands are: 'print', 'solve', 'evaluate', and 'back' (go back)"
     print(graphIdStr + graphHelpStr)
     userIn = input('+==>').strip()
-    while userIn != 'back' or 'q' or 'exit':
+    while userIn != 'back' or userIn != 'q' or userIn != 'exit':
         match userIn:
             case 'print':
                 print(graphIdStr + graph.nicePrint())
                 #Print the reverse graph for debugging (it appears to be correct)
-                print(graphIdStr + 'reverse!' + graph.nicePrintReverse())
+                if DEBUG:
+                    print(graphIdStr + 'reverse!' + graph.nicePrintReverse())
             case 'solve':
                 # Would produce a valid sequence for this graph/netlist
-                print("Not implemented!")
+                #Initially, try using Djisktra's algroithm. 
+                print("Not implemented (yet!)")
             case 'evaluate':
-                # Prompt for an imported sequence from the global variable 'seqs'
-                #determine the minimum memory consumption 
-                seqName = input("Enter an imported sequence to determine minimum memory consumption: ")
+                # Prompt for an imported sequence from the global variable 'seqs' and determine the maximum memory consumption 
+                seqName = input("Enter an imported sequence to determine worst-case memory consumption: ")
                 global seqs #seqs is in the global scope
                 if seqName not in seqs:
                     print("Sequence '"+ seqName + "' not imported!")   #
-                    userIn = '' #attempt to give help prompt on next iteration
+                    userIn = '' #attempt to give help prompt on next iteration (could be scope issue)
                     continue
                 #Otherwise pass seqs[seqName] 
                 mem = structs.findMemCost(graph, seqs[seqName])
-                print("The memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
+                print("The worst-case memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
             case 'back':
                 return
             case _: 
@@ -62,7 +64,7 @@ def seqLoop(seq):
                 if out:
                     print("Success!")
                 else:
-                    print("Failed. ;(")
+                    print("Failed (check permissions in path). ;(")
             case 'evaluate':
                 #Ask for a graph to test this sequence
                 graphName = input("Enter an imported graph name: ") # or a file name for a new graph: ")
@@ -88,8 +90,7 @@ def seqLoop(seq):
                 if out: 
                     print("The Sequence " + seq.name +  " is VALID for " + graphName + ".")
                 else:
-                    print("The Sequence " + seq.name +  " is NOT valid for " + graphName + ".")
-                
+                    print("The Sequence " + seq.name +  " is INvalid for " + graphName + ".")
             case 'back':
                 return
             case 'quit':
@@ -102,9 +103,31 @@ def seqLoop(seq):
     return
 #End seq. loop function
 
+def unitTestAdder1():
+    global graphs
+    global seqs
+    assert structs.isValidSequence(seqs['adder1a'], graphs['adder1']) == False
+    assert structs.isValidSequence(seqs['adder1b'], graphs['adder1']) == False
+    assert structs.findMemCost(graphs['adder1'], seqs['adder1b']) == 6
+
+    print("Unit Tests Run Successfully.")
+
 # "Main" equivalent
 graphs = {}
 seqs = {}
+
+#To help with testing, pre-populate graphs and seqs with some graphs and sequences
+gr = structs.Graph('adder1')
+gr.readGraph('./graphs/adder1.graph')
+graphs['adder1'] = gr
+
+seq = structs.Sequence('adder1b')
+seq.readSequence('./sequences/adder1b.seq')
+seqs['adder1b'] = seq
+seq = structs.Sequence('adder1a')
+seq.readSequence('./sequences/adder1a.seq')
+seqs['adder1a'] = seq
+
 
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 

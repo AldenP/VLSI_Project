@@ -111,12 +111,12 @@ class Graph:
 class Sequence:
     def __init__(self) -> None:
         self.order = [] #a list of the order of execution.
-        self.isValid = False    #to be determined later! (requires an input graph)
+        #self.isValid = False    #to be determined later! (requires an input graph)
         self.name = None
     
     def __init__(self, name) -> None:
         self.order = [] #a list of the order of execution.
-        self.isValid = False    #to be determined later! (requires an input graph)
+        #self.isValid = False    #to be determined later! (requires an input graph)
         self.name = name
 
     def add(self, node):
@@ -136,7 +136,8 @@ class Sequence:
         # this should be handled in the input function. 
         # This is convoluted with this implementation. I recommend doing two things:
         # 1) have a bi-directional graph to start with; 2) make mulitple modules (code over multiple files)
-         #This is now handled in the add_node function (it skips adding input nodes to graphOIn)
+         #This is now handled in the add_node function (it skips adding input nodes to graphOIn) => but this broke the memCost.
+
         """ Eliminate the input nodes from the O->In graph"""
         import copy
         graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
@@ -160,9 +161,9 @@ class Sequence:
                     graphCopy[edge].remove(node) 
                     #print('removed edge: ' + str(node) + " from " + str(edge)) #debug print: had copy in the for loop. needed to be above it
             else:
-                self.isValid = False
+                #self.isValid = False
                 return False
-        self.isValid = True
+        #self.isValid = True
         return True
   
     def nicePrint(self):
@@ -206,6 +207,10 @@ def findMemCost(graph, sequence):
     """Two  ideas: Use a set, track the size each iteration for the max. Remove from set
         when node no longer needed (by checking if any edges left.)
         Other idea: I forgot! but it probably deals with the graph and edges"""
+    if not isValidSequence(sequence, graph): 
+        print("Sequence '{0}' not valid for graph '{1}'", sequence.name, graph.name)
+        return -1   #return a false value. 
+
     inUse = set()  #Set to store nodes in use
     #Populate with input nodes to start. 
     for iNode in graph.inputNodes:
@@ -219,9 +224,6 @@ def findMemCost(graph, sequence):
         count = 0
         for e in graph.graphInO[node]:
             count += 1
-        #Scope issue?
-        #if count == 0:
-        #   raise Exception("Count is Zero")    #Would raise on an output node...
         #print("Number of edges for '" + node + "': " + str(count))
         edgeCount[node] = count
 
@@ -239,7 +241,7 @@ def findMemCost(graph, sequence):
 
         #Re locate to a larger scope?
         def printSet(set):
-            print('{', end=' ')
+            print('\t{', end=' ')
             for e in set:
                 print(str(e), end=', ')
             print('}')
@@ -252,7 +254,6 @@ def findMemCost(graph, sequence):
         
         if DEBUG:
             print('Max Mem so far: ' + str(maxMem) + '-----')
-        
         #Use graph to reduce edge counter, if any edges go to zero, remove from set
         for e in graph.graphOIn[next]:  #loop edges leading into current node (by looking backwards)
             edgeCount[e] -= 1
@@ -303,3 +304,6 @@ def isValidSequence(sequence, graph):
         #sequence.isValid = True
         return True
 #end isValidSequence(sequence, graph)
+
+def findASequence(graph):
+    pass

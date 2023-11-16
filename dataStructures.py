@@ -305,5 +305,42 @@ def isValidSequence(sequence, graph):
         return True
 #end isValidSequence(sequence, graph)
 
-def findASequence(graph):
-    pass
+def findValidSequence(graph):
+    """ Function to find a valid execution sequence. With the Out-to-In graph, 
+        just pick nodes that have no dependencies (edges) randomly (for the fun of it)"""
+    
+    # Make the empty sequence for this graph. 
+    seq = Sequence("gen_" + graph.name)
+
+    # Let's do some pre-processing
+    edgeCount = dict()
+    zeroEdge = [];
+    for node in graph.graphInO:
+        count = 0
+        for e in graph.graphInO[node]:
+            count += 1
+        #print("Number of edges for '" + node + "': " + str(count))
+        edgeCount[node] = count
+        # add nodes with 0 edges to an array
+        if count == 0:
+            zeroEdge.append(node)
+            del edgeCount[node]
+
+    import random as rand
+    # now we can pick the zeros in edgeCount. 
+    # loop while there is still a node left in edgeCount.
+    while (node in edgeCount) != 0:
+        # Start by picking a random node from the zeroEdge array
+        idx = rand.randint(0, len(zeroEdge) -1)
+        seq.add(zeroEdge[idx])  # add to sequence. 
+        # process the node
+        for edge in graph.graphInO[zeroEdge[idx]]:
+            edgeCount[edge] -= 1
+            if edgeCount[edge] == 0:
+                zeroEdge.append(edge)
+                del edgeCount[edge]
+        # done processing this node, delete its entry
+        del zeroEdge[idx]
+
+    return seq
+#End findValidSequence(graph)

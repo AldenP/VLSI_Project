@@ -22,10 +22,10 @@ def readGraph(graph, file_name):
             if sLine[0] == "Inputs":
                 numInputs = int(sLine[1].strip())
                 iLine = inFile.readline().split(" ")
-                for i in range(numInputs):
+                for i in range(0, numInputs - 1):
                     #Add the nodes to the graph and a list for the input nodes
                     # Add an i to the front of the node number to denote it is an input (otherwise use inputNode list)
-                    graph.inputNodes.append(iLine[i].strip())
+                    graph.inputNodes.append(iLine[i].strip())   #as of 11.16 there is an error for index out of range (iLine is empty?!?)
                     graph.add_node(iLine[i].strip())
             elif sLine[0] == "Outputs":
                 numOuts = int(sLine[1].strip())
@@ -123,6 +123,18 @@ def isValidPath(path):
         print(e)
         raise e
     return True
+
+def getNewPath(file_path):
+    """ Check to see if a file at path exists, to avoid overwriting a generated sequence, 
+        then return a path that doesn't interfere with it"""
+    import os.path
+    if os.path.isfile(file_path + '.seq'):
+        i = 1
+        while os.path.isfile(file_path + str(i) + '.seq'):
+            i += 1
+        return file_path + str(i) + '.seq'
+    # File does not exist, so this path is free to use.
+    return file_path + '.seq'
 
 def getFileName(path):
     """ Gets the name of a file by extracting it from the path

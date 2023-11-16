@@ -25,7 +25,19 @@ def graphLoop(graph):
             case 'solve':
                 # Would produce a valid sequence for this graph/netlist
                 #Initially, try using Djisktra's algroithm. 
-                print("Not implemented (yet!)")
+                # Pass the graph to the function to find a valid sequence
+                gen_seq = structs.findValidSequence(graph)
+                if structs.isValidSequence(gen_seq, graph):
+                    import os
+                    os.mkdir('./genSeqs/')  #make a new directory for generated Sequences
+                    new_path = io.getNewPath('./genSeqs' + gen_seq.name)    #get next available sequence name
+                    io.printSeqToFile(gen_seq, new_path)    #print to file
+                    #Inform the user
+                    print('Successfully generated a sequence: ' + gen_seq.name)
+                    print('Printed to: ' + new_path)
+                else:
+                    print('Generated Sequence invalid!')
+
             case 'evaluate':
                 # Prompt for an imported sequence from the global variable 'seqs' and determine the maximum memory consumption 
                 seqName = input("Enter an imported sequence to determine worst-case memory consumption: ")
@@ -70,19 +82,19 @@ def seqLoop(seq):
                 graphName = input("Enter an imported graph name: ") # or a file name for a new graph: ")
                 # Check if it is just a name
                 #Could use the getFileName(path) function to see if the path has been imported. 
-                """if graphName.find('/') != -1 or graphName.find('\\') != -1:
-                    # it is a path if it has a / or \.
-                    name = getFileName(graphName)
-                    global graphs
+                # """ if graphName.find('/') != -1 or graphName.find(backslash) != -1:
+                #     # it is a path if it has a / or \ 
+                #     name = getFileName(graphName)
+                #     global graphs
 
-                    try:
-                        idx = graphs.index(name)
-                    except ValueError:
-                        pass    #Pretty sure I'll end up with an error of scope again.
-                    if graphs.__contains__(name):
-                        seq.isValidSequence()
-                        pass
-                """
+                #     try:
+                #         idx = graphs.index(name)
+                #     except ValueError:
+                #         pass    #Pretty sure I'll end up with an error of scope again.
+                #     if graphs.__contains__(name):
+                #         seq.isValidSequence()
+                #         pass
+                # """
                 global graphs
                 evalOn = graphs[graphName]
                 out = seq.isValidSequence(evalOn)
@@ -118,14 +130,14 @@ seqs = {}
 
 #To help with testing, pre-populate graphs and seqs with some graphs and sequences
 gr = structs.Graph('adder1')
-gr.readGraph('./graphs/adder1.graph')
+io.readGraph(gr, './graphs/adder1.graph')
 graphs['adder1'] = gr
 
 seq = structs.Sequence('adder1b')
-seq.readSequence('./sequences/adder1b.seq')
+io.readSequence(seq, './sequences/adder1b.seq')
 seqs['adder1b'] = seq
 seq = structs.Sequence('adder1a')
-seq.readSequence('./sequences/adder1a.seq')
+io.readSequence(seq, './sequences/adder1a.seq')
 seqs['adder1a'] = seq
 
 

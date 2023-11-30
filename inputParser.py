@@ -379,6 +379,7 @@ def isValidPath(path):
 
 def getFileName(path):
     #Get the name of the file from the path (no extension or '/')
+    # *cough* base, ext =  os.path.splitext(filename);
     str1 = path.split('/')
     str2 = str1[-1].split('.')
     # assumming only 1 '.' for the extension, we can return the first element.

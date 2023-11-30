@@ -9,7 +9,7 @@ def readGraph(graph, file_name):
         Adds nodes for the input and output nodes given in file, 
         then adds the edges.
     """
-    # Check if path is valid!
+    # Check if path is valid! - may be an OS method for this.
     if not isValidPath(file_name):
         return False    #if not, return false!
     # Get the name of the graph
@@ -17,26 +17,35 @@ def readGraph(graph, file_name):
 
     #Open file for reading
     with open(file_name, 'r') as inFile:
-        sLine = inFile.readline().split(" ")
-        while sLine[0] != '':
-            if sLine[0] == "Inputs":
-                numInputs = int(sLine[1].strip())
-                iLine = inFile.readline().split(" ")
-                for i in range(0, numInputs - 1):
+        lines = inFile.readlines()  #read all lines at once
+
+        #sLine = inFile.readline().split(" ")   
+        index = 0 
+        while index < len(lines):
+            splitLine = lines[index].split(" ")
+            if splitLine[0] == "Inputs":
+                numInputs = int(splitLine[1].strip())
+                #inFile.readline()
+                #iLine = inFile.readline().split(" ")    # .graph files have just a newline, \n (LF). Windows uses '\r\n' (CRLF). 
+                index += 1
+                iLine = lines[index].split(" ") #pre-increment index, split the line with the input node #'s
+                for i in range(0, numInputs):   #range excludes the 2nd   #could simplfy and just do "for i in iLine:" 
                     #Add the nodes to the graph and a list for the input nodes
                     # Add an i to the front of the node number to denote it is an input (otherwise use inputNode list)
                     graph.inputNodes.append(iLine[i].strip())   #as of 11.16 there is an error for index out of range (iLine is empty?!?)
                     graph.add_node(iLine[i].strip())
-            elif sLine[0] == "Outputs":
-                numOuts = int(sLine[1].strip())
-                oLine = inFile.readline().split(" ")
+            elif splitLine[0] == "Outputs":
+                numOuts = int(splitLine[1].strip())
+                #oLine = inFile.readline().split(" ")
+                index += 1
+                oLine = lines[index].split(" ")
                 for i in range(numOuts):
                     #Similarly, add an 'o' to the fron as designation, or use the list. 
                     graph.outNodes.append(oLine[i].strip())
                     graph.add_node(oLine[i].strip()) 
-            elif sLine[0] == "Nodes":
+            elif splitLine[0] == "Nodes":
                 #Number of internal nodes? => # of non-input nodes
-                numNodes = int(sLine[1].strip())
+                numNodes = int(splitLine[1].strip())
                 newNodes = numNodes - len(graph.outNodes)   # # of output nodes (or numOuts)
                 #i = 1
                 #while str(i) not in graph.graphInO:
@@ -58,13 +67,17 @@ def readGraph(graph, file_name):
                     idx += 1
                     count += 1
                 #end while
-            elif sLine[0] == "Edges":
-                numEdges = int(sLine[1].strip())
+            elif splitLine[0] == "Edges":
+                numEdges = int(splitLine[1].strip())
                 for i in range(numEdges):
-                    e = inFile.readline().split(" ")
+                    index += 1
+                    e = lines[index].split(" ")
                     n1, n2 = e[0].strip(), e[1].strip() #multiple assignment
                     graph.add_edge(n1, n2)   #edge from n1 to n2
-        sLine = inFile.readline().split(" ")
+            # else:
+            #     index+=1    # in case we are stuck on a non if'ed input line
+            index += 1  #else should be useless now.
+        #sLine = inFile.readline().split(" ")
         #end while
     #end with
     return True # successfully read the graph.
@@ -145,3 +158,7 @@ def getFileName(path):
     str2 = str1[-1].split('.')
     # assumming only 1 '.' for the extension, we can return the first element.
     return str2[0]
+    # import os;
+    # base, ext = os.path.splitext(path)
+    # head, tail = os.path.split(base)
+    # return tail

@@ -296,7 +296,8 @@ def isValidSequence(sequence, graph):
             if len(graphCopy[node]) == 0:   #If there is a dependancy (edge) leading into this node (len !=0), not valid 
                 #This node can be processed, so we must remove it from the graph.
                 for edge in graph.graphInO[node]: # these are the nodes dependent on 'node' (nodes upstream)
-                    graphCopy[edge].remove(node) 
+                    graphCopy[edge].remove(node)    #error: removing edge already removed: why? all input nodes are removed above.
+                        #as such, don't include input nodes in generated sequences!
                     #print('removed edge: ' + str(node) + " from " + str(edge)) #debug print: had copy in the for loop. needed to be above it
             else:
                 #sequence.isValid = False
@@ -313,12 +314,25 @@ def findValidSequence(graph):
     seq = Sequence("gen_" + graph.name)
 
     # Let's do some pre-processing
+    # first remove the input nodes. make a deepcopy of the _ graph
+    graphInO = copy.deepcopy(graph.graphInO)
+    graphOIn = copy.deepcopy(graph.graphOIn)
+    # Remove the input nodes
+    for inode in graph.inputNodes:
+        for node in graphInO[inode]:
+            graphOIn[node].remove(inode)
+
+        del graphInO[inode] #this simple? no. edges are still there.
+        #del graphOIn[inode]
+    
+    # then, count the edges and track zeroEdges
     edgeCount = dict()
-    zeroEdge = [];
-    for node in graph.graphInO:
-        count = 0
-        for e in graph.graphInO[node]:
-            count += 1
+    zeroEdge = []
+    for node in graphInO:
+        # Get the number of edges entering node. (do we need to remove input nodes?)
+        count = len(graphOIn[node])   #get number of elements in the array for the graph at [node]
+        # for e in graph.graphInO[node]:
+        #     count += 1
         #print("Number of edges for '" + node + "': " + str(count))
         edgeCount[node] = count
         # add nodes with 0 edges to an array
@@ -334,7 +348,7 @@ def findValidSequence(graph):
         idx = rand.randint(0, len(zeroEdge) -1)
         seq.add(zeroEdge[idx])  # add to sequence. 
         # process the node
-        for edge in graph.graphInO[zeroEdge[idx]]:
+        for edge in graphInO[zeroEdge[idx]]:
             edgeCount[edge] -= 1
             if edgeCount[edge] == 0:
                 zeroEdge.append(edge)

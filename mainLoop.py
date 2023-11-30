@@ -30,7 +30,7 @@ def graphLoop(graph):
                 if structs.isValidSequence(gen_seq, graph):
                     import os
                     os.mkdir('./genSeqs/')  #make a new directory for generated Sequences
-                    new_path = io.getNewPath('./genSeqs' + gen_seq.name)    #get next available sequence name
+                    new_path = io.getNewPath('./genSeqs/' + gen_seq.name)    #get next available sequence name
                     io.printSeqToFile(gen_seq, new_path)    #print to file
                     #Inform the user
                     print('Successfully generated a sequence: ' + gen_seq.name)
@@ -118,8 +118,9 @@ def seqLoop(seq):
 def unitTestAdder1():
     global graphs
     global seqs
+    # make sure that the asserted value is correct! (flipped one of the bools)
     assert structs.isValidSequence(seqs['adder1a'], graphs['adder1']) == False
-    assert structs.isValidSequence(seqs['adder1b'], graphs['adder1']) == False
+    assert structs.isValidSequence(seqs['adder1b'], graphs['adder1']) == True
     assert structs.findMemCost(graphs['adder1'], seqs['adder1b']) == 6
 
     print("Unit Tests Run Successfully.")
@@ -140,6 +141,7 @@ seq = structs.Sequence('adder1a')
 io.readSequence(seq, './sequences/adder1a.seq')
 seqs['adder1a'] = seq
 
+unitTestAdder1()    #Run unit tests
 
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 
@@ -149,7 +151,7 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
     match userIn:
         case 'readGraph':
             file_path = input("Enter graph file path: ")
-            gr = structs.Graph()
+            gr = structs.Graph(name=io.getFileName(file_path))
             out = io.readGraph(gr, file_path)
             #if failed
             if not out:
@@ -164,7 +166,7 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             print(helpStr)
         case 'readSequence':
             seq_path = input("Enter Sequence Path: ")
-            seq = structs.Sequence()
+            seq = structs.Sequence(name=io.getFileName(seq_path))
             out = io.readSequence(seq, seq_path)    #returns true/false
             # if failed
             if not out:

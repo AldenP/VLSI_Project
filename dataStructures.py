@@ -236,7 +236,8 @@ def findMemCost(graph, sequence):
     #loop while there is a next node to process. 
     for next in seq.order:
         #Assume order is valid. compute 'next', add to set (check if new max)
-        print("DEBUG> For seq. Node " + str(next))
+        if DEBUG:
+            print("DEBUG> For seq. Node " + str(next))
         inUse.add(next) #compute 'next'
 
         #Re locate to a larger scope?
@@ -341,6 +342,8 @@ def findValidSequence(graph):
             del edgeCount[node]
 
     import random as rand
+    import time
+    rand.seed(time.time())  #seed the random generator to ensure true randomness!
     # now we can pick the zeros in edgeCount. 
     # loop while there is still a node left in edgeCount.
     while (node in edgeCount) != 0:

@@ -143,9 +143,9 @@ def getNewPath(file_path):
     import os.path
     if os.path.isfile(file_path + '.seq'):
         i = 1
-        while os.path.isfile(file_path + str(i) + '.seq'):
+        while os.path.isfile(file_path + '_' + str(i) + '.seq'):
             i += 1
-        return file_path + str(i) + '.seq'
+        return file_path + '_' + str(i) + '.seq'
     # File does not exist, so this path is free to use.
     return file_path + '.seq'
 

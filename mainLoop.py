@@ -6,6 +6,7 @@
 
 import inputOutput as io;
 import dataStructures as structs;
+import time
 DEBUG = False;
 
 # Loop functions for console-based user input
@@ -26,22 +27,29 @@ def graphLoop(graph):
                 # Would produce a valid sequence for this graph/netlist
                 #Initially, try using Djisktra's algroithm. 
                 # Pass the graph to the function to find a valid sequence
+                tic = time.perf_counter()
                 gen_seq = structs.findValidSequence(graph)
+                toc = time.perf_counter()
+
                 if structs.isValidSequence(gen_seq, graph):
                     import os
-                    os.mkdir('./genSeqs/')  #make a new directory for generated Sequences
+                    if not os.path.exists('./genSeqs/'):
+                        os.mkdir('./genSeqs/')  #make a new directory for generated Sequences if not already
                     new_path = io.getNewPath('./genSeqs/' + gen_seq.name)    #get next available sequence name
                     io.printSeqToFile(gen_seq, new_path)    #print to file
                     #Inform the user
-                    print('Successfully generated a sequence: ' + gen_seq.name)
+                    print('Successfully generated a sequence: ' + gen_seq.name + f' in {toc-tic :0.6f} seconds')
                     print('Printed to: ' + new_path)
+                    global seqs
+                    seqs[gen_seq.name] = gen_seq
+                    print('Imported Sequence!')
                 else:
-                    print('Generated Sequence invalid!')
+                    print('Error: Generated Sequence invalid!')
 
             case 'evaluate':
                 # Prompt for an imported sequence from the global variable 'seqs' and determine the maximum memory consumption 
                 seqName = input("Enter an imported sequence to determine worst-case memory consumption: ")
-                global seqs #seqs is in the global scope
+                #global seqs #seqs is in the global scope
                 if seqName not in seqs:
                     print("Sequence '"+ seqName + "' not imported!")   #
                     userIn = '' #attempt to give help prompt on next iteration (could be scope issue)
@@ -146,9 +154,9 @@ unitTestAdder1()    #Run unit tests
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 
 print('*' * 50 + "\nWelcome to the Input Parser!" + helpStr)
-userIn = input("==>").strip()   # could also .lower()
-while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
-    match userIn:
+userIn = input("==>").strip().split(" ")   # could also .lower()
+while userIn[0] != 'quit': # or 'q' or 'exit':     #only the first was working
+    match userIn[0]:
         case 'readGraph':
             file_path = input("Enter graph file path: ")
             gr = structs.Graph(name=io.getFileName(file_path))
@@ -156,7 +164,7 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             #if failed
             if not out:
                 print('Graph Import Failed. (Check file path?)')
-                userIn = ''
+                userIn[0] = ''
                 continue #...the while loop
             #Success!
             graphs[gr.name] = gr    #map the string name (gId) to this graph object (gr)
@@ -171,7 +179,7 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             # if failed
             if not out:
                 print('Failed to import sequence. (Check file name)')
-                userIn = '' #To reset user input, and avoid an infinite loop that leads here.
+                userIn[0] = '' #To reset user input, and avoid an infinite loop that leads here.
                 continue
             # Success!
             seqs[seq.name] = seq #map the string name to this seq. object
@@ -208,7 +216,11 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
 
         case 'select':
             #Add option to select a sequence!
-            grName = input("Enter an imported graph or sequence name: ")
+            grName = ''
+            if len(userIn) == 2:
+                grName = userIn[1]
+            else:
+                grName = input("Enter an imported graph or sequence name: ")
             found = False
             for g in graphs.values():
                 if g.name == grName:
@@ -231,7 +243,7 @@ while userIn != 'quit': # or 'q' or 'exit':     #only the first was working
             print(helpStr)
         case _:
             print(helpStr)
-    userIn = input('==>')
+    userIn = input('==>').strip().split(" ")
 #End while
 print("Goodbye! Have a nice day.")
 # End 'main'

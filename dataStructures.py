@@ -42,6 +42,8 @@ class Graph:
             #print("A node was not in the graph")
         self.numEdges += 1
 
+    #add BFS and DFS functions here.
+
     def nicePrint(self):
         """ Prints the graph object, listing the number of input nodes and then printing them
             followed by number of output nodes and printing them.
@@ -118,6 +120,7 @@ class Sequence:
         self.order = [] #a list of the order of execution.
         #self.isValid = False    #to be determined later! (requires an input graph)
         self.name = name
+        self.graphName = str.removesuffix(name.removesuffix('b'), 'a')  #remove a or b if it is at the end.
 
     def add(self, node):
         """ Adds node to this execution sequence (appends to the end). 
@@ -307,7 +310,7 @@ def isValidSequence(sequence, graph):
         return True
 #end isValidSequence(sequence, graph)
 
-def findValidSequence(graph):
+def findValidSequence(graph, trueRandom):
     """ Function to find a valid execution sequence. With the Out-to-In graph, 
         just pick nodes that have no dependencies (edges) randomly (for the fun of it)"""
     
@@ -343,7 +346,9 @@ def findValidSequence(graph):
 
     import random as rand
     import time
-    rand.seed(time.time())  #seed the random generator to ensure true randomness!
+    if trueRandom:
+        rand.seed(time.time())  #seed the random generator to ensure true randomness!
+    # Else seed already set
     # now we can pick the zeros in edgeCount. 
     # loop while there is still a node left in edgeCount.
     while (node in edgeCount) != 0:
@@ -361,3 +366,9 @@ def findValidSequence(graph):
 
     return seq
 #End findValidSequence(graph)
+
+def findBetterSequences(graph):
+    """ Implement a topological sort on the graph, which will order the nodes based on depth to the 
+
+    """
+    pass

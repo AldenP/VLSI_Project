@@ -55,10 +55,8 @@ def runValidSequences(graphs, seqs):
     for graph in graphs:    #gives the keys, not the objects
         for seq in seqs:
             # skip if used already to improve runtime =>premature optimization!
-            #if usedSeqs
-            # import re
-            # re.search(graph, seq)
-            if graph == seqs[seq].graphName:    #if the graphs name is contained in the sequence name.
+            
+            if graph == seqs[seq].graphName:    #if this is the graph for this sequence, check if valid
                 #bug: adder1 is contained in adder16a/b ... go on ahead and add a graph name to the sequence object.    
                 if structs.isValidSequence(seqs[seq], graphs[graph]):
                     print(f'Sequence \'{seq}\' is VALID for graph \'{graph}\'')
@@ -87,11 +85,49 @@ def runRandomSeqGen(graphs, trueRandom):
         print('Printed to: ' + new_path)
 
     return True
-def findMemCost():
+def findMemCost(graphs, sequences):
     """ Run the memory cost function for the valid sequences on each graph
 
     """
-    pass
+    # function structs.findMemCost will check if the sequence is valid. So we can pass all the sequences and graphs.
+    # Loop over each graph structure
+    for gr in graphs.values():
+        for seq in sequences.values():
+            # First see if the sequence goes with the graph.
+            if seq.graphName != gr.name:
+                continue    #continue to the next sequence
+            memCost = structs.findMemCost(gr, seq)
+            if memCost != -1:
+                print("Sequence '{0}' has a memory cost of {1} for the graph '{2}'".format(seq.name, memCost, gr.name))
+            # otherwise a print statement already occurs
+    # Now run the generated sequences.
+    # import sequences from the AUTO_GEN_FOLDER. split file name by '_' to get graph name.
+    genSeqs = []
+    import glob, os
+    file_names = glob.glob(AUTO_GEN_FOLDER + '*.seq')
+    for fileName in file_names:
+        grName = fileName.split('_')[1].split('.')[0]   #first split '_', take right substring, then split '.' take left.
+        head, tail = os.path.split(fileName)
+        name, ext = os.path.splitext(tail)
+
+        newSeq = structs.Sequence(name)
+        newSeq.graphName = grName
+        out = io.readSequence(newSeq, fileName)
+        if not out:
+            print(f'Error reading a generated Sequence. File name {fileName}')
+        # Sequence imported successfully, now run the memCost function
+        genSeqs.append(newSeq)
+    
+    #now loop graphs again...
+    for gr in graphs.values():
+        for gSeq in genSeqs:
+            if gSeq.graphName != gr.name:
+                continue
+            memCost = structs.findMemCost(gr, gSeq)
+            if memCost != -1:
+                print("Sequence '{0}' has a memory cost of {1} for the graph '{2}'".format(gSeq.name, memCost, gr.name))
+    
+    return True     #it ran successfully
 
 def main():
     """ The main function of this file. """
@@ -105,16 +141,45 @@ def main():
         print('Aborting after sequence failure')
         return
     # Successfully imported graphs and sequences, now run is valid on the graphs and sequences.
-    print('\nRunning isValidSequence on all Sequences...')
-    runValidSequences(graphs, seqs)
-    print('...Done running validity checker')
-    print('\nGenerating a random sequence for each graph...')
-    runRandomSeqGen(graphs, False)
-    print('... done generating random (valid) sequences');
-    # Find the memory consumption of each sequence
-    print('\nEvaluating memory cost for each graph with their valid sequences...')
+    userIn = input('Do you want to check the validity of all sequences? (y/n): ')
+    if userIn.lower() == 'y':
+        print('\nRunning isValidSequence on all Sequences...')
+        runValidSequences(graphs, seqs)
+        print('...Done running validity checker')
+
+    userIn = input('Do you want to DELETE existing random sequences? (y/n): ')
+    if userIn.lower() == 'y':
+        import os,glob
+        #os.chdir(AUTO_GEN_FOLDER)  #changes dir for rest of execution!
+        for file in glob.glob(AUTO_GEN_FOLDER +'*.seq'):
+            os.remove(file)
+            print(f'File {file} has been deleted.')
+        print('Files Deleted\n')
+
+    userIn = input('Do you want to create random valid sequences? (y/n): ')
+    if userIn.lower() == 'y':
+        uIn2 = input('Do you want true randomness? (y/n): ')
+        print('\nGenerating a random sequence for each graph...')
+        if uIn2.lower() == 'y':        
+            runRandomSeqGen(graphs, True)
+        else:
+            runRandomSeqGen(graphs, False)
+        print('... done generating random (valid) sequences')
     
+    # Find the memory consumption of each sequence
+    userIn = input('Do you want to find the memory cost of each graph? (y/n): ')
+    if userIn.lower() == 'y':
+        print('\nEvaluating memory cost for each graph...')
+        findMemCost(graphs, seqs)
+        print('\n...done evaluating memory cost for the graphs')
+
     # Now create better sequences 
+
+    print('\nFinished Running Tasks, Goodbye')
+    return 0
+
+def promptUser(prompt):
+    """ Prompt the user for a true/false answer and check different versions of yes/no"""
 
     pass
 
@@ -122,3 +187,9 @@ def __main__():
     main()
 
 main()
+
+### To delete all auto generated sequences:
+# import os,glob
+# os.chdir(AUTO_GEN_FOLDER) #note that it changes for all subsequent calls to os.
+# for file in glob.glob(AUTO_GEN_FOLDER +'*.seq'):
+#     os.remove(file)

@@ -44,6 +44,7 @@ class Graph:
 
     #add BFS and DFS functions here.
 
+
     def nicePrint(self):
         """ Prints the graph object, listing the number of input nodes and then printing them
             followed by number of output nodes and printing them.
@@ -210,8 +211,9 @@ def findMemCost(graph, sequence):
     """Two  ideas: Use a set, track the size each iteration for the max. Remove from set
         when node no longer needed (by checking if any edges left.)
         Other idea: I forgot! but it probably deals with the graph and edges"""
+    
     if not isValidSequence(sequence, graph): 
-        print("Sequence '{0}' not valid for graph '{1}'", sequence.name, graph.name)
+        print("Sequence '{0}' not valid for graph '{1}'".format(sequence.name, graph.name))
         return -1   #return a false value. 
 
     inUse = set()  #Set to store nodes in use
@@ -243,21 +245,24 @@ def findMemCost(graph, sequence):
             print("DEBUG> For seq. Node " + str(next))
         inUse.add(next) #compute 'next'
 
-        #Re locate to a larger scope?
+        #Relocate to a larger scope?
         def printSet(set):
+            """Function to print a set. (for debuging)"""
             print('\t{', end=' ')
             for e in set:
                 print(str(e), end=', ')
             print('}')
-
+        
         if DEBUG:
             printSet(inUse)
+        
         #Update maxMem if set is larger now.
         if len(inUse) > maxMem:
             maxMem = len(inUse)
         
         if DEBUG:
             print('Max Mem so far: ' + str(maxMem) + '-----')
+
         #Use graph to reduce edge counter, if any edges go to zero, remove from set
         for e in graph.graphOIn[next]:  #loop edges leading into current node (by looking backwards)
             edgeCount[e] -= 1
@@ -265,7 +270,7 @@ def findMemCost(graph, sequence):
                 inUse.remove(e) #Free this from the set/memory
         
         if DEBUG:
-            print('Set after edge removal');
+            print('Set after edge removal')
             printSet(inUse)
     #End for loop over sequence nodes.
     return maxMem
@@ -274,14 +279,11 @@ def findMemCost(graph, sequence):
 def isValidSequence(sequence, graph):
         """ Determine if this sequence is valid for the graph selected
             Start by navigating the graph in the 'reversed' direction. If no edges then 
-            that node can be executed (it does not depend on any internal nodes)"""
-        #First remove the edges that go to the input nodes. => This will run multiple times on the same object! (Pass by reference!)
-        # this should be handled in the input function. 
-        # This is convoluted with this implementation. I recommend doing two things:
-        # 1) have a bi-directional graph to start with; 2) make mulitple modules (code over multiple files)
-         #This is now handled in the add_node function (it skips adding input nodes to graphOIn)
+            that node can be executed (it does not depend on any internal nodes)
+            Then check to ensure that each internal node is processed, ensuring that all 
+            nodes that should execute are executed.
+        """
         """ Eliminate the input nodes from the O->In graph"""
-
         graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
         for inNode in graph.inputNodes:
             # For each ending node of the input node edges, ...
@@ -289,24 +291,28 @@ def isValidSequence(sequence, graph):
                 #...remove the input node from the list.
                 #graph.graphOIn[node].remove(inNode)
                 graphCopy[node].remove(inNode)
+        #need to check if all nodes have been hit. (or at least that the outputs have)
+        #processed = [False] * len(graph.internNodes)
+        processed = dict()
+        for node in graph.internNodes:
+            processed[node] = False
         
         #Now we can check if the sequence of nodes is valid by seeing if the list of nodes for that node is empty
-        #Needed to be above the for loop.
-       # graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
         for node in sequence.order: #For nodes in sequence
-            #graphCopy = graph.graphOIn.copy()   #gives a shallow copy...the lists will be the same data
-            #print(graphCopy.nicePrintReverse())     #doesn't work because copy is a dictionary not a graph obj!
-            #print("len of node '" + str(node) + "': " + str(len(graphCopy[node])))
             if len(graphCopy[node]) == 0:   #If there is a dependancy (edge) leading into this node (len !=0), not valid 
                 #This node can be processed, so we must remove it from the graph.
-                for edge in graph.graphInO[node]: # these are the nodes dependent on 'node' (nodes upstream)
+                for edge in graph.graphInO[node]: # these are the nodes dependent on 'node' ('node' is upstream)
                     graphCopy[edge].remove(node)    #error: removing edge already removed: why? all input nodes are removed above.
                         #as such, don't include input nodes in generated sequences!
                     #print('removed edge: ' + str(node) + " from " + str(edge)) #debug print: had copy in the for loop. needed to be above it
+                processed[node] = True
             else:
                 #sequence.isValid = False
                 return False
         #sequence.isValid = True
+        #check if any internal nodes (non-inputs) have not been processed!
+        if False in processed.values():
+            return False
         return True
 #end isValidSequence(sequence, graph)
 
@@ -346,12 +352,12 @@ def findValidSequence(graph, trueRandom):
 
     import random as rand
     import time
-    if trueRandom:
-        rand.seed(time.time())  #seed the random generator to ensure true randomness!
+    if not trueRandom:
+        rand.seed('12345678900')  #set a static seed to prevent true randomness.
     # Else seed already set
     # now we can pick the zeros in edgeCount. 
     # loop while there is still a node left in edgeCount.
-    while (node in edgeCount) != 0:
+    while len(zeroEdge) != 0:   #bad loop caused it to end early and produce bad output; then it also didn't include outputs
         # Start by picking a random node from the zeroEdge array
         idx = rand.randint(0, len(zeroEdge) -1)
         seq.add(zeroEdge[idx])  # add to sequence. 
@@ -364,6 +370,9 @@ def findValidSequence(graph, trueRandom):
         # done processing this node, delete its entry
         del zeroEdge[idx]
 
+    if len(edgeCount) != 0:
+        print('Edge Count length not equal to zero => invalid sequence?')
+    # should check if it is valid before sending, or do it on the other side.
     return seq
 #End findValidSequence(graph)
 

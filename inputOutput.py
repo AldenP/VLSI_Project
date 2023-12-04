@@ -155,7 +155,7 @@ def getFileName(path):
     """
     #Get the name of the file from the path (no extension or '/')
     str1 = path.split('/')  #Should also split on '\' as it could be used instead of '/'
-    str2 = str1[-1].split('.')
+    str2 = str1[-1].split('\\')[-1].split('.')
     # assumming only 1 '.' for the extension, we can return the first element.
     return str2[0]
     # import os;

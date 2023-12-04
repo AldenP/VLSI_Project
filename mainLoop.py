@@ -7,7 +7,7 @@
 import inputOutput as io;
 import dataStructures as structs;
 import time
-DEBUG = False;
+DEBUG = False
 
 # Loop functions for console-based user input
 def graphLoop(graph):
@@ -28,7 +28,7 @@ def graphLoop(graph):
                 #Initially, try using Djisktra's algroithm. 
                 # Pass the graph to the function to find a valid sequence
                 tic = time.perf_counter()
-                gen_seq = structs.findValidSequence(graph)
+                gen_seq = structs.findValidSequence(graph, False)
                 toc = time.perf_counter()
 
                 if structs.isValidSequence(gen_seq, graph):
@@ -56,7 +56,9 @@ def graphLoop(graph):
                     continue
                 #Otherwise pass seqs[seqName] 
                 mem = structs.findMemCost(graph, seqs[seqName])
-                print("The worst-case memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
+                if mem != -1:
+                    print("The worst-case memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
+                # else is handled in function.
             case 'back':
                 return
             case _: 
@@ -105,7 +107,8 @@ def seqLoop(seq):
                 # """
                 global graphs
                 evalOn = graphs[graphName]
-                out = seq.isValidSequence(evalOn)
+                #out = seq.isValidSequence(evalOn)  # older function no longer used
+                out = structs.isValidSequence(seq, evalOn)
                 #print("The Sequence is " + ( out ? "not ":"") + "valid!")
                 if out: 
                     print("The Sequence " + seq.name +  " is VALID for " + graphName + ".")

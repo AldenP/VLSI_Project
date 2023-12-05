@@ -63,13 +63,14 @@ def runValidSequences(graphs, seqs):
                 else:
                     print(f'Sequence \'{seq}\' is INVALID for graph \'{graph}\'')
     return
+import time
 
 def runRandomSeqGen(graphs, trueRandom):
     """ Generates a random valid execution sequence for each graph.
         Includes runtime.
     """
     for graph in graphs.values():
-        import time
+        
         tic = time.perf_counter()   #Start time
         gen_seq = structs.findValidSequence(graph, trueRandom)
         toc = time.perf_counter()   #end time
@@ -91,13 +92,17 @@ def topSortSequences(graphs):
     """
     seqs = {}
     for gr in graphs.values():
+        tic = time.perf_counter()
         topSort = gr.topologicalSort()  # perform the sort
+        toc = time.perf_counter()
+
         name = 'top_' + gr.name 
         seq = structs.Sequence(name)    # create sequence structure
         # add each of the nodes in the top sort to the sequence
         for i in range(len(topSort)):
             seq.add(topSort[i])
         seqs[name] = seq    #add the sequence to the dictionary
+        print(f'Sequence \'{name}\' generated in {(toc-tic) * 1000 :3.3f} ms')
     
     return seqs
 

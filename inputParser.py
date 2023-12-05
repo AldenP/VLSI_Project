@@ -2,6 +2,9 @@
 # EEE4334 CAD for VLSI Project Part 1 (input parsing)
 # 10.23.2023
 
+#This is the all in one file 
+#as of 11.9.2023, moving to multiple files. 
+
 #Import copy to make deep copies of objects
 import copy
 # Define a graph class (adjacency list)
@@ -36,8 +39,8 @@ class Graph:
         if node1 in self.graphInO and node2 in self.graphInO:
             self.graphInO[node1].append(node2)
             # Do not add an edge to an input node for the reversed graph
-            if node1 not in self.inputNodes:
-                self.graphOIn[node2].append(node1)  # put edge in reverse order
+            #if node1 not in self.inputNodes:    #logic prevents findMemCost from working!
+            self.graphOIn[node2].append(node1)  # put edge in reverse order
             #self.graphInO[node2].append(node1) # for undirected
         #else:
             # Is there a log we can print to?
@@ -95,14 +98,6 @@ class Graph:
                         idx += 1
                         count += 1
                     #end while
-                    
-                    #print('i is ' + str(i)) #We have an issue of scope!
-
-#                    for j in range(i, i+newNodes):
-#                        self.internNodes.append(j)
-#                        self.add_node(str(j))
-#                        print('Added node: ' + str(j))
-
                 elif sLine[0] == "Edges":
                     numEdges = int(sLine[1].strip())
                     for i in range(numEdges):
@@ -208,21 +203,24 @@ class Sequence:
         # this should be handled in the input function. 
         # This is convoluted with this implementation. I recommend doing two things:
         # 1) have a bi-directional graph to start with; 2) make mulitple modules (code over multiple files)
-        """ This is now handled in the add_node function (it skips adding input nodes to graphOIn)
+         #This is now handled in the add_node function (it skips adding input nodes to graphOIn)
+        """ Eliminate the input nodes from the O->In graph"""
+        graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
         for inNode in graph.inputNodes:
-            # For each end node of the input node edges, ...
+            # For each ending node of the input node edges, ...
             for node in graph.graphInO[inNode]:
                 #...remove the input node from the list.
-                graph.graphOIn[node].remove(inNode)
-                """
+                #graph.graphOIn[node].remove(inNode)
+                graphCopy[node].remove(inNode)
+        
         #Now we can check if the sequence of nodes is valid by seeing if the list of nodes for that node is empty
         #Needed to be above the for loop.
-        graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
-        for node in self.order:
+       # graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
+        for node in self.order: #For nodes in sequence
             #graphCopy = graph.graphOIn.copy()   #gives a shallow copy...the lists will be the same data
             #print(graphCopy.nicePrintReverse())     #doesn't work because copy is a dictionary not a graph obj!
             #print("len of node '" + str(node) + "': " + str(len(graphCopy[node])))
-            if len(graphCopy[node]) == 0:
+            if len(graphCopy[node]) == 0:   #If there is a dependancy (edge) leading into this node (len !=0), not valid 
                 #This node can be processed, so we must remove it from the graph.
                 for edge in graph.graphInO[node]: # these are the nodes dependent on 'node' (nodes upstream)
                     graphCopy[edge].remove(node) 
@@ -275,6 +273,7 @@ class Sequence:
         return self.order
 #End Sequence Class
 
+#Define some functions for the user to interact with the program (in a console setting)
 def graphLoop(graph):
     gId = graph.name
     graphIdStr = "For Graph '" + gId + "'"
@@ -302,7 +301,6 @@ def graphLoop(graph):
                 #Otherwise pass seqs[seqName] 
                 mem = findMemCost(graph, seqs[seqName])
                 print("The memory cost is " + str(mem) + " for graph '" + graph.name + "', using sequence '" + seqName + "'")
-                #print("Not Implemented!")
             case 'back':
                 return
             case _: 
@@ -332,6 +330,7 @@ def seqLoop(seq):
                 #Ask for a graph to test this sequence
                 graphName = input("Enter an imported graph name or a file name for a new graph: ")
                 # Check if it is just a name
+                #Could use the getFileName(path) function to see if the path has been imported. 
                 """if graphName.find('/') != -1 or graphName.find('\\') != -1:
                     # it is a path if it has a / or \.
                     name = getFileName(graphName)
@@ -380,6 +379,7 @@ def isValidPath(path):
 
 def getFileName(path):
     #Get the name of the file from the path (no extension or '/')
+    # *cough* base, ext =  os.path.splitext(filename);
     str1 = path.split('/')
     str2 = str1[-1].split('.')
     # assumming only 1 '.' for the extension, we can return the first element.
@@ -405,31 +405,59 @@ def findMemCost(graph, sequence):
         for e in graph.graphInO[node]:
             count += 1
         #Scope issue?
-        if count == 0:
-            raise Exception("Count is Zero")
-        print("Number of edges for '" + node + "': " + count)
+        #if count == 0:
+        #   raise Exception("Count is Zero")    #Would raise on an output node...
+        #print("Number of edges for '" + node + "': " + str(count))
         edgeCount[node] = count
 
+    print("Initial Edge Count Array: ")
+    for n in graph.graphInO:
+        print("'" + str(n) + "': " + str(edgeCount[n]))    
     #gr = copy.deepcopy(graph.InO)
     seq = copy.deepcopy(sequence)   #copy not needed
     #loop while there is a next node to process. 
     for next in seq.order:
         #Assume order is valid. compute 'next', add to set (check if new max)
+        print("DEBUG> For seq. Node " + str(next))
         inUse.add(next) #compute 'next'
+
+        def printSet(set):
+            print('{', end=' ')
+            for e in set:
+                print(str(e), end=', ')
+            print('}')
+
+        printSet(inUse)
         #Update maxMem if set is larger now.
         if len(inUse) > maxMem:
             maxMem = len(inUse)
+        print('Max Mem so far: ' + str(maxMem) + '-----')
         #Use graph to reduce edge counter, if any edges go to zero, remove from set
-        for e in graph.graphOIn[next]:  #loop edges leading into current node
+        for e in graph.graphOIn[next]:  #loop edges leading into current node (by looking backwards)
             edgeCount[e] -= 1
-            if edgeCount[e] == 0:
+            if edgeCount[e] == 0:   #changed logic to <= 0, input nodes have zero edges initially?
                 #Free this from the set/memory
                 inUse.remove(e)
+        print('Set after edge removal');
+        printSet(inUse)
+    #End For
     return maxMem
         
 # "Main" equivalent
 graphs = {}
 seqs = {}
+
+#To help with testing, pre-populate graphs and seqs with some graphs and sequences
+gr = Graph('adder1')
+gr.readGraph('./graphs/adder1.graph')
+graphs['adder1'] = gr
+
+seq = Sequence('adder1b')
+seq.readSequence('./sequences/adder1b.seq')
+seqs['adder1b'] = seq
+seq = Sequence('adder1a')
+seq.readSequence('./sequences/adder1a.seq')
+seqs['adder1a'] = seq
 
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 

@@ -85,9 +85,24 @@ def runRandomSeqGen(graphs, trueRandom):
         print('Printed to: ' + new_path)
 
     return True
+def topSortSequences(graphs):
+    """ Runs topological sort on all graphs and then creates a sequence object out of it. 
+        It will then return these sequences.
+    """
+    seqs = {}
+    for gr in graphs.values():
+        topSort = gr.topologicalSort()  # perform the sort
+        name = 'top_' + gr.name 
+        seq = structs.Sequence(name)    # create sequence structure
+        # add each of the nodes in the top sort to the sequence
+        for i in range(len(topSort)):
+            seq.add(topSort[i])
+        seqs[name] = seq    #add the sequence to the dictionary
+    
+    return seqs
+
 def findMemCost(graphs, sequences):
     """ Run the memory cost function for the valid sequences on each graph
-
     """
     # function structs.findMemCost will check if the sequence is valid. So we can pass all the sequences and graphs.
     # Loop over each graph structure
@@ -100,7 +115,11 @@ def findMemCost(graphs, sequences):
             if memCost != -1:
                 print("Sequence '{0}' has a memory cost of {1} for the graph '{2}'".format(seq.name, memCost, gr.name))
             # otherwise a print statement already occurs
-    # Now run the generated sequences.
+    return True
+
+def findRandomMemCosts(graphs):
+    """ Runs the generated (random) sequences by importing them first.
+    """
     # import sequences from the AUTO_GEN_FOLDER. split file name by '_' to get graph name.
     genSeqs = []
     import glob, os
@@ -171,9 +190,15 @@ def main():
     if userIn.lower() == 'y':
         print('\nEvaluating memory cost for each graph...')
         findMemCost(graphs, seqs)
+        print('\nFor the random Sequences:')
+        findRandomMemCosts(graphs)  #find cost of the randoms
         print('\n...done evaluating memory cost for the graphs')
 
     # Now create better sequences 
+    print('\nTopologically Sorting the Graphs, and then finding memory consumption')
+    topSeqs = topSortSequences(graphs)
+    findMemCost(graphs, topSeqs)
+    print('\nFinished finding topological memory costs')
 
     print('\nFinished Running Tasks, Goodbye')
     return 0

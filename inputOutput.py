@@ -80,6 +80,7 @@ def readGraph(graph, file_name):
         #sLine = inFile.readline().split(" ")
         #end while
     #end with
+    graph.populateInternalGraph()   #populate the internal graph for use in other functions
     return True # successfully read the graph.
 #end function
 

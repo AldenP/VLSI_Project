@@ -23,6 +23,7 @@ class Graph:
         self.outNodes = []
         self.internNodes = []
         self.name = name
+        self.graphInternal = {} #graph without the input nodes from input to output.
 
     def add_node(self, node):
         if node not in self.graphInO:
@@ -42,8 +43,41 @@ class Graph:
             #print("A node was not in the graph")
         self.numEdges += 1
 
+    def populateInternalGraph(self):
+        """ generates a graph with only the internal nodes (non-input nodes) stored in 
+            an adjacency list within the graph structure.
+        """
+        self.graphInternal = copy.deepcopy(self.graphInO)   # copy the whole input to output graph.
+        # For each of the input nodes,
+        for inNode in self.inputNodes:
+            del self.graphInternal[inNode]  # delete the list of edges from it.
+        
     #add BFS and DFS functions here.
 
+    def topoSortHelper(self, node, visited, stack):
+        visited[node] = True
+        for edge in self.graphInternal[node]:
+            if not visited[edge]:  #edge is a string, and not zero based.
+                self.topoSortHelper(edge, visited, stack)   # recursively call the function.
+        # now push the node to the stack
+        #stack.insert(0, node)
+        stack.append(node)
+
+    def topologicalSort(self):
+        #initialize some arrays.
+        # visited = [False] * self.numNodes
+        visited = {}
+        # populate the visited dictionary
+        for node in self.graphInternal.keys():
+            visited[node] = False
+        
+        stack = []
+        for node in self.graphInternal.keys():   # keys are strings, so we need to get them from the .keys() function
+            if not visited[node]:    #since it is a string, the index must be an integer. It is not zero-based, hence -1.
+                self.topoSortHelper(node, visited, stack)
+        
+        return stack[::-1]
+        #return stack[::-1]  #what this do? print in reverse?
 
     def nicePrint(self):
         """ Prints the graph object, listing the number of input nodes and then printing them
@@ -121,7 +155,12 @@ class Sequence:
         self.order = [] #a list of the order of execution.
         #self.isValid = False    #to be determined later! (requires an input graph)
         self.name = name
-        self.graphName = str.removesuffix(name.removesuffix('b'), 'a')  #remove a or b if it is at the end.
+        name = name.split('_')
+        if len(name) == 1:
+            self.graphName = str.removesuffix(name[0].removesuffix('b'), 'a')  #remove a or b if it is at the end.
+        else:
+            self.graphName = name[1]
+
 
     def add(self, node):
         """ Adds node to this execution sequence (appends to the end). 
@@ -316,6 +355,9 @@ def isValidSequence(sequence, graph):
         return True
 #end isValidSequence(sequence, graph)
 
+# import for the function below.
+import random as rand
+
 def findValidSequence(graph, trueRandom):
     """ Function to find a valid execution sequence. With the Out-to-In graph, 
         just pick nodes that have no dependencies (edges) randomly (for the fun of it)"""
@@ -350,8 +392,6 @@ def findValidSequence(graph, trueRandom):
             zeroEdge.append(node)
             del edgeCount[node]
 
-    import random as rand
-    import time
     if not trueRandom:
         rand.seed('12345678900')  #set a static seed to prevent true randomness.
     # Else seed already set

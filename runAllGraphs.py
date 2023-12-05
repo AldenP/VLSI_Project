@@ -63,11 +63,11 @@ def runValidSequences(graphs, seqs):
                 else:
                     print(f'Sequence \'{seq}\' is INVALID for graph \'{graph}\'')
     return
-import time
 
+import time
 def runRandomSeqGen(graphs, trueRandom):
     """ Generates a random valid execution sequence for each graph.
-        Includes runtime.
+        Prints the runtime in milliseconds.
     """
     for graph in graphs.values():
         
@@ -78,14 +78,14 @@ def runRandomSeqGen(graphs, trueRandom):
         import os
         # Check if path exists before trying to mkdir.
         if not os.path.exists(AUTO_GEN_FOLDER):
-            os.mkdir(AUTO_GEN_FOLDER)  #make a new directory for generated Sequences if not already
+            os.mkdir(AUTO_GEN_FOLDER)  #make a new directory for generated Sequences if not already exists
         new_path = io.getNewPath(AUTO_GEN_FOLDER + gen_seq.name)    #get next available sequence name
         io.printSeqToFile(gen_seq, new_path)    #print to file
         #Inform the user
         print('Successfully generated a sequence: ' + gen_seq.name + f' in { (toc-tic)*1000 :3.3f} milliseconds')
         print('Printed to: ' + new_path)
-
     return True
+
 def topSortSequences(graphs):
     """ Runs topological sort on all graphs and then creates a sequence object out of it. 
         It will then return these sequences.
@@ -128,9 +128,10 @@ def findRandomMemCosts(graphs):
     # import sequences from the AUTO_GEN_FOLDER. split file name by '_' to get graph name.
     genSeqs = []
     import glob, os
-    file_names = glob.glob(AUTO_GEN_FOLDER + '*.seq')
+    file_names = glob.glob(AUTO_GEN_FOLDER + '*.seq')   #glob returns all files that have a .seq extension/ending
     for fileName in file_names:
         grName = fileName.split('_')[1].split('.')[0]   #first split '_', take right substring, then split '.' take left.
+        #Extract the name of the sequence
         head, tail = os.path.split(fileName)
         name, ext = os.path.splitext(tail)
 
@@ -144,13 +145,12 @@ def findRandomMemCosts(graphs):
     
     #now loop graphs again...
     for gr in graphs.values():
-        for gSeq in genSeqs:
+        for gSeq in genSeqs:    #genSeqs is a list, and so gSeq is an object not a string
             if gSeq.graphName != gr.name:
                 continue
-            memCost = structs.findMemCost(gr, gSeq)
-            if memCost != -1:
+            memCost = structs.findMemCost(gr, gSeq) #find the memory cost.
+            if memCost != -1:   #report the memcost if it is a valid sequence
                 print("Sequence '{0}' has a memory cost of {1} for the graph '{2}'".format(gSeq.name, memCost, gr.name))
-    
     return True     #it ran successfully
 
 def main():
@@ -199,11 +199,11 @@ def main():
         findRandomMemCosts(graphs)  #find cost of the randoms
         print('\n...done evaluating memory cost for the graphs')
 
-    # Now create better sequences 
-    print('\nTopologically Sorting the Graphs, and then finding memory consumption')
-    topSeqs = topSortSequences(graphs)
-    findMemCost(graphs, topSeqs)
-    print('\nFinished finding topological memory costs')
+    # Now create 'better' sequences 
+    print('\nTopologically Sorting the Graphs, and then finding memory consumption...')
+    topSeqs = topSortSequences(graphs)  #sort the graphs topologically and store the result in a sequence, returns a dictionary
+    findMemCost(graphs, topSeqs)        #find the memory cost and print/report it.
+    print('\n...Finished finding topological memory costs')
 
     print('\nFinished Running Tasks, Goodbye')
     return 0

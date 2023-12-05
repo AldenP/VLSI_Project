@@ -47,12 +47,7 @@ def readGraph(graph, file_name):
                 #Number of internal nodes? => # of non-input nodes
                 numNodes = int(splitLine[1].strip())
                 newNodes = numNodes - len(graph.outNodes)   # # of output nodes (or numOuts)
-                #i = 1
-                #while str(i) not in graph.graphInO:
-                #    nonlocal i #doesn't work! ugh. (give some error)
-                #    i = i + 1
-                    # Will not work if output nodes are not continuous numbers.
-                    # Solution would be to check if (i in inputNodes or i in outNodes) then skip. if not, add to the graph.
+
                 idx = 1
                 count = 0
                 while count < newNodes:

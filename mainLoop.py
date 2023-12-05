@@ -24,21 +24,27 @@ def graphLoop(graph):
                 if DEBUG:
                     print(graphIdStr + 'reverse!' + graph.nicePrintReverse())
             case 'solve':
-                # Would produce a valid sequence for this graph/netlist
-                #Initially, try using Djisktra's algroithm. 
-                # Pass the graph to the function to find a valid sequence
-                tic = time.perf_counter()
-                gen_seq = structs.findValidSequence(graph, False)
-                toc = time.perf_counter()
+                gen_seq = structs.Sequence('None')#does this declare a variable?
+
+                in2 = input('Use top sort (yes) or random (no): ').lower().strip()
+                if in2 == 'yes':
+                    gen_seq = structs.findBetterSequences(graph)
+                else:
+                    # Would produce a valid sequence for this graph/netlist
+                    #Initially, try using Djisktra's algroithm. 
+                    # Pass the graph to the function to find a valid sequence
+                    tic = time.perf_counter()
+                    gen_seq = structs.findValidSequence(graph, False)
+                    toc = time.perf_counter()
+                    print('Successfully generated a random sequence: ' + gen_seq.name + f' in { (toc-tic)*1000 :2.4f} seconds')
 
                 if structs.isValidSequence(gen_seq, graph):
                     import os
                     if not os.path.exists('./genSeqs/'):
-                        os.mkdir('./genSeqs/')  #make a new directory for generated Sequences if not already
+                        os.mkdir('./genSeqs/')  #make a new directory for generated Sequences if not already created
                     new_path = io.getNewPath('./genSeqs/' + gen_seq.name)    #get next available sequence name
                     io.printSeqToFile(gen_seq, new_path)    #print to file
                     #Inform the user
-                    print('Successfully generated a sequence: ' + gen_seq.name + f' in {toc-tic :0.6f} seconds')
                     print('Printed to: ' + new_path)
                     global seqs
                     seqs[gen_seq.name] = gen_seq
@@ -127,6 +133,8 @@ def seqLoop(seq):
 #End seq. loop function
 
 def unitTestAdder1():
+    """ Unit tests for the adder1 graph to ensure correct code.
+    """
     global graphs
     global seqs
     # make sure that the asserted value is correct! (flipped one of the bools)
@@ -134,9 +142,9 @@ def unitTestAdder1():
     assert structs.isValidSequence(seqs['adder1b'], graphs['adder1']) == True
     assert structs.findMemCost(graphs['adder1'], seqs['adder1b']) == 6
 
-    print("Unit Tests Run Successfully.")
+    print("Unit Tests Run Successfully.\n")
 
-# "Main" equivalent
+# "Main" equivalent => could make a function main, and then call it at end.
 graphs = {}
 seqs = {}
 
@@ -157,7 +165,7 @@ unitTestAdder1()    #Run unit tests
 helpStr = "\nCommands are: 'readGraph', 'readSequence', 'show', 'select', 'quit', and 'help'"
 
 print('*' * 50 + "\nWelcome to the Input Parser!" + helpStr)
-userIn = input("==>").strip().split(" ")   # could also .lower()
+userIn = input("==>").strip().lower().split(" ")   # could also .lower()
 while userIn[0] != 'quit': # or 'q' or 'exit':     #only the first was working
     match userIn[0]:
         case 'readGraph':
@@ -242,7 +250,7 @@ while userIn[0] != 'quit': # or 'q' or 'exit':     #only the first was working
         case 'quit':
             break
         case 'help':
-            # add extra information to this command.
+            # add extra information to this command?
             print(helpStr)
         case _:
             print(helpStr)

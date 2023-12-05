@@ -76,8 +76,7 @@ class Graph:
             if not visited[node]:    #since it is a string, the index must be an integer. It is not zero-based, hence -1.
                 self.topoSortHelper(node, visited, stack)
         
-        return stack[::-1]
-        #return stack[::-1]  #what this do? print in reverse?
+        return stack[::-1]  #reverses the array
 
     def nicePrint(self):
         """ Prints the graph object, listing the number of input nodes and then printing them
@@ -171,6 +170,7 @@ class Sequence:
             return True
         return False    #node already in list
 
+    #not used anymore, used function is later in the file.
     def isValidSequence(self, graph):
         """ Determine if this sequence is valid for the graph selected
             Start by navigating the graph in the 'reversed' direction. If no edges then 
@@ -220,7 +220,7 @@ class Sequence:
                 out += ' -> ' + node
         return '\n' + out + '\n'
 
-    # Move to inputOutput.py ? 
+    # Moved to inputOutput.py
     def printToFile(self, file_name):
         """ Prints the execution sequence to a file provided in the
             same format as the input
@@ -242,12 +242,20 @@ class Sequence:
         return self.order
 #End Sequence Class
 
+#Relocated to a larger scope
+def printSet(set):
+    """Function to print a set. (for debuging)"""
+    print('\t{', end=' ')
+    for e in set:
+        print(str(e), end=', ')
+    print('}')
+
 import copy
 # Project Functions: sequence evaluation, graph evaluation with a sequence, and solving a graph. 
 def findMemCost(graph, sequence):
     """ Finds the minimum memory cost of evaluating the graph using the sequence provided
         Sequence should be valid"""
-    """Two  ideas: Use a set, track the size each iteration for the max. Remove from set
+    """ Two  ideas: Use a set, track the size each iteration for the max. Remove from set
         when node no longer needed (by checking if any edges left.)
         Other idea: I forgot! but it probably deals with the graph and edges"""
     
@@ -265,18 +273,19 @@ def findMemCost(graph, sequence):
     # (better - takes the hit at the start) but it should iterate the whole graph...
     edgeCount = dict()
     for node in graph.graphInO:
-        count = 0
-        for e in graph.graphInO[node]:
-            count += 1
+        #count = len(graph.graphInO)
+        # for e in graph.graphInO[node]:
+        #     count += 1
         #print("Number of edges for '" + node + "': " + str(count))
-        edgeCount[node] = count
+        edgeCount[node] = len(graph.graphInO[node])
 
     if DEBUG:   #Print to console some debug info.
         print("Initial Edge Count Array: ")
         for n in graph.graphInO:
             print("'" + str(n) + "': " + str(edgeCount[n]))    
     
-    seq = copy.deepcopy(sequence)   #copy not needed
+    # seq = copy.deepcopy(sequence)   #copy not needed
+    seq = sequence  # basically a pointer
     #loop while there is a next node to process. 
     for next in seq.order:
         #Assume order is valid. compute 'next', add to set (check if new max)
@@ -284,6 +293,16 @@ def findMemCost(graph, sequence):
             print("DEBUG> For seq. Node " + str(next))
         inUse.add(next) #compute 'next'
 
+
+        #Relocate to a larger scope?
+        def printSet(set):
+            """Function to print a set. (for debuging)"""
+            print('\t{', end=' ')
+            for e in set:
+                print(str(e), end=', ')
+            print('}')
+        
+        
         #Relocate to a larger scope?
         def printSet(set):
             """Function to print a set. (for debuging)"""
@@ -323,6 +342,7 @@ def isValidSequence(sequence, graph):
             nodes that should execute are executed.
         """
         """ Eliminate the input nodes from the O->In graph"""
+        # Now handled after a graph is imported. the graph is called: graph.graphInternal as it has only internal nodes (non-inputs)
         graphCopy = copy.deepcopy(graph.graphOIn)   #Deep copy copies ALL the data from reversed graph
         for inNode in graph.inputNodes:
             # For each ending node of the input node edges, ...
@@ -332,7 +352,7 @@ def isValidSequence(sequence, graph):
                 graphCopy[node].remove(inNode)
         #need to check if all nodes have been hit. (or at least that the outputs have)
         #processed = [False] * len(graph.internNodes)
-        processed = dict()
+        processed = dict()  #works better as a dictionary with this implementation
         for node in graph.internNodes:
             processed[node] = False
         
@@ -383,9 +403,6 @@ def findValidSequence(graph, trueRandom):
     for node in graphInO:
         # Get the number of edges entering node. (do we need to remove input nodes?)
         count = len(graphOIn[node])   #get number of elements in the array for the graph at [node]
-        # for e in graph.graphInO[node]:
-        #     count += 1
-        #print("Number of edges for '" + node + "': " + str(count))
         edgeCount[node] = count
         # add nodes with 0 edges to an array
         if count == 0:
@@ -394,7 +411,8 @@ def findValidSequence(graph, trueRandom):
 
     if not trueRandom:
         rand.seed('12345678900')  #set a static seed to prevent true randomness.
-    # Else seed already set
+    # Else seed already set (should be the current system time)
+
     # now we can pick the zeros in edgeCount. 
     # loop while there is still a node left in edgeCount.
     while len(zeroEdge) != 0:   #bad loop caused it to end early and produce bad output; then it also didn't include outputs
@@ -415,9 +433,21 @@ def findValidSequence(graph, trueRandom):
     # should check if it is valid before sending, or do it on the other side.
     return seq
 #End findValidSequence(graph)
+import time
 
 def findBetterSequences(graph):
     """ Implement a topological sort on the graph, which will order the nodes based on depth to the 
-
     """
-    pass
+    # this is done in the runAllGraphs file. Repeated here for use in mainLoop
+    tic = time.perf_counter()
+    topSort = graph.topologicalSort()  # perform the sort
+    toc = time.perf_counter()
+
+    name = 'top_' + graph.name 
+    seq = Sequence(name)    # create sequence structure
+    # add each of the nodes in the top sort to the sequence
+    for i in range(len(topSort)):
+        seq.add(topSort[i])
+    
+    print(f'Sequence \'{name}\' generated in {(toc-tic) * 1000 :3.3f} ms')
+    return seq
